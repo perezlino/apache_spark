@@ -1,0 +1,45 @@
+Cuando utilizar option('multiline',True)
+========================================
+
+No utilizamos option('multiline',True) :
+--------------------------------------
+
+Podemos ver que todos los registros se encuentran EN UNA LINEA.
+
+[{"raceId":841,"driverId":153,"stop":1,"lap":1,"time":"17:05:23","duration":26.898,"milliseconds":26898},
+ {"raceId":841,"driverId":30,"stop":1,"lap":1,"time":"17:05:52","duration":25.021,"milliseconds":25021},
+ {"raceId":841,"driverId":17,"stop":1,"lap":11,"time":"17:20:48","duration":23.426,"milliseconds":23426}]
+
+
+Debemos utilizar option('multiline',True) :
+-----------------------------------------
+
+[
+   {
+      "raceId":841,
+      "driverId":153,
+      "stop":1,
+      "lap":1,
+      "time":"17:05:23",
+      "duration":26.898,
+      "milliseconds":26898
+   },
+   {
+      "raceId":841,
+      "driverId":30,
+      "stop":1,
+      "lap":1,
+      "time":"17:05:52",
+      "duration":25.021,
+      "milliseconds":25021
+   },
+   {
+      "raceId":841,
+      "driverId":17,
+      "stop":1,
+      "lap":11,
+      "time":"17:20:48",
+      "duration":23.426,
+      "milliseconds":23426
+   }
+]
