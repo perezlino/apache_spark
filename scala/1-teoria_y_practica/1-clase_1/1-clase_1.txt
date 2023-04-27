@@ -1,0 +1,190 @@
+CLASE 1
+=======
+
+Hablemos del término de big data, hay que entender a qué se refiere. Para entenderlo vamos a poner un ejemplo técnico, 
+que de hecho va a ser una de las primeras cosas que implementaremos en su momento, supongamos que viene una persona de 
+negocio y tiene una necesidad de negocio, esa necesidad de negocio pues esta persona te la va a expresar por medio de 
+documentos, por medio de presentaciones, por medio de correos electrónicos, hablando, etc. Lo importante es que tiene 
+una necesidad, esa necesidad es recibida por un desarrollador y el desarrollador lo que hace es codificar una solución 
+de esa necesidad. Cuando una necesidad de negocio está colocada como código, a eso se le conoce como la LÓGICA DE NEGOCIO. 
+¿Qué tipos de necesidades de negocio podría tener una persona de negocio? pues podría ser algo tan simple como un reporte: 
+“ … oye quiero que me construyas un reporte que me filtre solamente a aquellos clientes que tengan más de 25 años … “ 
+sí sabes de SQL, por ejemplo, eso es tan simple como lanzar una consulta WHERE donde la edad sea mayor a 25, entonces, 
+podría pedirte algo muy simple o podría pedirte algo muy complejo, como por ejemplo, quiero que me construyas un modelo 
+analítico que prediga si este cliente va a ser un buen pagador o va a ser un mal pagador, eso por ejemplo lo podríamos 
+implementar con una red neuronal como veremos entre las últimas sesiones. Entonces, puede ser una necesidad simple o puede 
+ser una necesidad muy compleja, pero es una necesidad que tiene negocio, nosotros tomamos esa necesidad, hacemos un proceso 
+de análisis y tenemos la codificación. De hecho, parte del curso es también entender ese proceso de análisis y para eso 
+justamente están los arquetipos que indican las capas que hay que implementar respecto a una arquitectura. Sea como sea, en 
+código ya tenemos la solución a esa necesidad, cuando está en código es la lógica de negocio. Ahora vamos a ejecutar el 
+proceso, para que un proceso funcione pues probablemente necesita “data input”, habrá un archivo de datos, el proceso hará 
+lo que tenga que hacer y aquí está el archivo de datos de salida que es el reporte que negocio me ha pedido. En esencia esto 
+es procesar, me da igual si era un reporte o una red neuronal, sigue el mismo patrón, leer, procesar y escribir la resultante. 
+Pero vamos a poner más detalle técnico de esto, ¿qué implica procesar? lo primero que hay que saber es que pues negocio nos va 
+a dejar uno o varios archivos de datos a procesar para resolver esa necesidad que nos haya pedido, para simplificar el concepto 
+vamos a decir que nos da solo un archivo y este archivo pesa poquísimo, solamente 10 MB de datos, entonces, nosotros tenemos 
+un proceso que hemos implementado, ¿cómo implementamos los procesos? para eso existen los lenguajes de programación. Para 
+implementar esta lógica de negocio podríamos usar por ejemplo JAVA, R, .NET, PYTHON, SCALA, SQL, etc. Literalmente hay decenas 
+y decenas de lenguajes que se utilizan dentro de las empresas, la pregunta ahora es y ¿cuál de todos estos lenguajes es el mejor 
+lenguaje de programación? pues la respuesta es que no existe un mejor lenguaje de programación, sino que, cada lenguaje se adapta 
+a cierta realidad. Por ejemplo, JAVA es muy bueno para la programación de frameworks empresariales, R es muy bueno para la 
+programación estadística, .NET es muy bueno para ecosistemas basados en Windows, PYTHON es muy bueno para la programación 
+funcional, SCALA es muy bueno para la programación funcional y para la programación de tiempo real, SQL es muy bueno para el 
+procesamiento estructural y así sucesivamente. Entonces, dependiendo de lo que negocio te pida alguno de estos lenguajes de 
+programación se adaptará mejor para poder codificarlo más fácilmente. Entonces tú como desarrollador dirás: “ … de acuerdo voy a 
+hacer esta solución con algún lenguaje que me guste … “ por ahora voy a poner simplemente a Scala, ya en unos momentos vamos a 
+aclarar el por qué debemos usar Scala para entornos de big data, de hecho, es o bien Scala o bien Python, pero vamos por partes, 
+eliges un lenguaje que a ti te gusta y listo tenemos el proceso. Pero el proceso que tú has codificado se va a ejecutar en alguna 
+infraestructura, no se ejecuta en el aire, de acuerdo entonces vamos a hacer más estrictos. Esta cajita de procesamiento que tomará 
+la data input y va a ejecutar un script de código en donde has implementado tu lógica de negocio en el lenguaje que mejor se adapte 
+tiene que tener asociada una infraestructura de procesamiento probablemente tú puedas decir: “ … oye negocio no hay ningún problema, 
+mi laptop que tiene 16 GB de RAM puede procesar este pequeño archivo de 10 MB, lo va a poder hacer … “. De hecho, uno de los primeros 
+pasos del procesamiento es volcar lo que queremos procesar, este archivo de datos, sobre la memoria RAM de la infraestructura. Acá 
+tenemos una infraestructura de 16 GB de RAM, 10 MB entran en esos 16 GB de RAM, casi no va a ocupar ningún espacio, entonces, esta 
+laptop lo puede procesar. Mandamos a ejecutar el script sobre esta infraestructura y tenemos el archivo de reporte o la red neuronal 
+o lo que el negocio nos había pedido y ahí está tu reporte y negocio ya te lo puedes llevar y hacer lo que tu gustes. Negocio te 
+dice: “ … perfecto … “, hasta ahí vamos bien. Viene negocio el día siguiente y ahora te da otro archivo de datos, este es un poco 
+más pesado, ahora tenemos un gigabyte de información y te dice lo siguiente: “ … no hay ninguna modificación en la necesidad que yo 
+he tenido como negocio, las reglas de procesamiento son las mismas, es decir, tu script es el mismo, solo que ahora el archivo que 
+lee tu script tiene más información, si en archivo anterior habian 100.000 registros, pues en el nuevo archivo hay 1.000.000 de 
+registros, tenemos un gigabyte de datos, entonces, es tan simple como ahora que tu proceso apunte a este nuevo archivo, vamos a darle 
+al botón de ejecutar y ¿que sería lo primero? pues el proceso volcará el archivo de datos en la memoria RAM, un giga de datos, pues, 
+si entran en 16 GB de RAM, así que, la laptop lo va a poder procesar y listo tenemos el nuevo output y negocios se lleva ese output. 
+Al tercer día viene nuevamente la persona de negocio y te dice lo siguiente: “ … ahora te voy a dejar otro archivo de datos, la lógica 
+de negocio va a ser la misma, solo que ahora tenemos 10 GB de información a procesar … “  y tú dices: “ … de acuerdo, ya estamos casi 
+en el límite de la infraestructura, pero, lo va a poder procesar de todas maneras, esos 10 GB entran en esos 16 GB de RAM, de hecho, 
+sobra algún espacio en la memoria RAM para que el sistema operativo se ejecute y todo lo que tu laptop tenga para funcionar y va a ir 
+lento, probablemente, porque ya es más información, se va a demorar probablemente más pero lo va a poder procesar … “ y listo, tenemos 
+la resultante y negocios se lo puede llevar. El problema vendrá el cuarto día, viene negocio y ahora te da un archivo de 50 GB de 
+información, entonces, el primer paso de tu procesamiento es volcarlo a la memoria RAM, pero 50 GB de datos no entran en 16 GB de RAM, 
+por lo tanto, esta infraestructura es demasiado pequeña para el procesamiento, ¿qué es lo que va a pasar? pues al momento de hacer el 
+volcado en la memoria RAM de lo que queremos procesar se va a producir un desbordamiento de memoria RAM o en términos más simples, 
+pues la infraestructura era demasiado pequeña para la volumetría del proceso, ahí tenemos el primer problema. ¿Cómo se solucionaba 
+esto de manera tradicional? conceptualmente es fácil de definir una solución, podríamos decir lo siguiente: “ … oye acá tenemos un 
+problema de volumetría, son 50 GB de información que van a ser procesados en mi laptop, que solo tienen 16 GB de RAM, entonces, pues 
+eso va a producir que haya un desbordamiento de la memoria, pero no pasa nada, porque, yo conozco un patrón de diseño de procesamiento 
+por partes, vamos a partir el archivo en 5 partes de 10 GB y vamos a hacer que el proceso vaya procesando de 10 en 10, leemos 10 GB, 
+los volcamos en la RAM, eso sí entra aquí y tenemos una resultante parcial. Luego liberamos la memoria RAM y leemos los siguientes 
+10 GB, volvemos a cargarlos el proceso hace lo que tiene que hacer y tenemos la segunda resultante y así sucesivamente. Esto es lo que 
+se conoce como una implementación por partes, ¿funciona? claro que sí, el problema es que, recordemos que en el proceso que habíamos 
+implementado teníamos la lógica de negocio, la necesidad que negocios tenia, el problema ahora está en que esto de partir el archivo 
+en varias partes e ir procesándolos por partes, ir juntando cada parte e ir liberando la memoria RAM entre cada procesamiento, todo eso 
+no es algo que se haga de manera automática, vamos a tener que modificar el script y dentro colocarle lógica de procesamiento por 
+partes. Así que habrá que modificar el script para que ahora se comporte de esta manera. ¿Cuál es el problema de codificar con lógica 
+de procesamiento por partes? que depende de la dificultad algorítmica, ¿a qué me refiero? recordemos que las necesidades de negocio 
+pueden ser variables, lo más simple que nos podría pedir es un pequeño reporte, pero entre eso hay muchas otras cosas, por ejemplo, 
+tal vez nos pida un flujo de limpieza de datos que tenga miles de líneas de código o podría pedirnos, por ejemplo, programación 
+funcional, que de esto vamos a hablar más a detalle en la próxima sesión, pero, básicamente es crear funciones personalizadas que 
+implementen reglas muy complejas o, por ejemplo, podríamos hacer un flujo de tiempo real o podría pedirnos procesar data 
+semiestructurada o no estructurada o podría pedirnos algún tipo de modelo analítico o de deep learning, entonces, pues las necesidades 
+de negocio pueden llegar a ser muy complejas. Dependiendo de la complejidad algorítmica que tenga esa necesidad, mientras más complejo 
+sea el algoritmo, pues más compleja es la implementación de la lógica de procesamiento por partes, no todas estas necesidades se 
+resuelven partiendo del archivo en varias partes, porque, a veces una parte para ser procesada depende de analizar otras partes, 
+entonces, ahí es donde viene la dificultad. Por eso, conceptualmente, la lógica de procesamiento por partes es fácil de entender, el 
+problema es llevar a código. Eso haría que tu proceso implementado no solamente tenga la necesidad de negocio, sino, que adicionalmente 
+tú como desarrollador tienes que meter en el script por fuerzas, porque, la infraestructura es muy pequeña, esta lógica de 
+procesamiento por partes. Ahora, ampliemos esto a la vida real, dentro de una empresa no va a haber solo un proceso, las empresas 
+literalmente tienen miles de procesos, entonces, ¿qué es lo que pasa? cada uno de estos procesos inicialmente pueden hacer con 
+naturaleza de procesar poca cantidad de información, quizá 10 MB, pero en el tiempo es probable que la volumetría aumente, llegará un 
+punto en que la infraestructura del proceso es demasiado pequeña, entonces, un desarrollador tendrá que darle mantenimiento al script 
+para agregarle la lógica de procesamiento por partes, pero este script puede ser muy complejo, de hecho, podríamos asumir que es el 
+tipo de proceso más simple, una reportería, pero recordemos que en la vida real estos reportes tienen muchas líneas de código y si ya 
+de por sí es difícil que el mismo desarrollador que hizo el código le dé mantenimiento al código, imagínense que esta persona se va de 
+la empresa y ahora viene otra persona para darle mantenimiento a un código que él no conoce, tiene que haber una etapa de análisis que 
+le va a consumir 2 o 3 días, una vez que entienda el código, tiene que plantear la estrategia de procesamiento por partes y luego de 
+plantearla tiene que implementarla, quizás no funcione bien y luego tiene que tunearla y todo eso se traduce en tiempo y negocio 
+dice: “ … oye ya está mi proceso que iba a procesar 50 GB de datos? … “ y la respuesta es: “ … eh no, lo que pasa es que todavía 
+estamos viendo cómo lo vamos a modificar para que sea eso posible y esto no para un proceso, sino, para todos los procesos que tenga 
+la empresa, por lo tanto, las soluciones que se implementen con lógica de procesamiento por partes no son escalables y esta es la 
+palabra clave, no es una solución escalable, es decir, no puede crecer en el tiempo. Tradicionalmente estos eran los problemas que los 
+desarrolladores tenían y ¿cómo se solucionaba? la manera más fácil era: “ … mira negocio, me estás dando un archivo de 50 GB de datos 
+y mi laptop pues no va a poder procesar eso, qué te parece si compramos un servidor empresarial linux que tenga 100 GB de memoria 
+RAM … “ ahora sí los 50 GB de datos pueden entrar en este nuevo servidor, entonces negocio te dice: “ … de acuerdo … “. Para no 
+complejizar el desarrollo de los procesos, el proceso ya no se va a ejecutar en tu laptop, ahora se ejecutará en un server empresarial, 
+así que tendríamos lo siguiente: 50 GB de datos, la infraestructura ya no sería tu laptop, sino, que sería un server de 100 GB de RAM, 
+colocaríamos ahí dentro el proceso con la lógica de negocio que has implementado, el primer paso es volcar el archivo a la RAM y ahora 
+sí entra y no hay nada de implementaciones de lógica, de procesamiento por partes, le damos al botón y tenemos el reporte y negocios se 
+lo lleva. Negocio te dice: “ … perfecto, con este server ahora si está funcionando todo bien … “. El problema viene a continuación, al 
+día siguiente viene negocio y te dice: “ … tenemos más volumetría para ese proceso, ahora son 90 GB de datos, de acuerdo estamos casi 
+en el límite, el servidor lo va a poder procesar y listo, aquí está tu resultante y negocios se la lleva, Al tercer día, viene negocio 
+y te dice: “ … oye gerencia ahora nos ha dado un archivo de 300 GB de datos y lo quiere para ahora … “, vamos a procesarlo, la 
+respuesta es que nuevamente estamos con el problema de límite de la infraestructura, pues esos 300 GB no entran en los 100 GB de este 
+servidor en su memoria RAM y nuevamente, lógica de procesamiento por partes que ya sabemos que se traduce en tiempo y no es algo 
+seguro, porque, hay que estar haciendo evaluación dependiendo de lo que se haya codificado y también sabemos que la empresa tendrá 
+literalmente miles de procesos y tendremos problemas en todos esos procesos y, por lo tanto, nuevamente estamos en soluciones que no 
+son escalables. Entonces ¿qué es lo que pasó? vamos a solucionar esto con un concepto que existe desde los años 60, hemos escalado 
+desde una infraestructura de una computadora común a una infraestructura de un servidor empresarial, pero aun así esto se queda 
+pequeño, así que vamos a escalar al siguiente nivel de infraestructura, es un concepto que existe desde los años 60, realmente no es 
+nada nuevo, el de clúster computacional. ¿Qué es un clúster computacional? un conjunto de servidores que trabajan de manera paralela, 
+para resolver un mismo problema. Realmente la arquitectura de un clúster es más compleja ya aprenderemos de esto más adelante cuando 
+hayamos hecho codificaciones sobre uno, de hecho, hay más detalles técnicos aquí, pero todo esto ya lo vamos a hacer directamente en 
+código. Por ejemplo, podríamos tener un clúster de 10 servidores, para simplificar los cálculos, porque de hecho de cada servidor 
+importa el disco duro, la memoria RAM y los núcleos de CPU, por ahora, solamente hablemos de memoria RAM. Asumamos que cada uno de 
+estos servidores tiene 100 GB de memoria RAM, cómo tenemos 10 de estos servidores esto se traduciría a tener 1.000 GB de RAM, es decir, 
+tendríamos 1 TB de memoria RAM en nuestra disposición para ejecutar lo que queramos. Entonces, en esta nueva infraestructura tenemos 
+esa potencia computacional, ahora viene negocio y te dice: “ … de acuerdo, aquí está mi archivo de 300 GB de datos, ya hemos comprado 
+un clúster, ahora sí tienes la potencia para procesar  este archivo … “ de acuerdo, aquí tenemos este proceso, el cual tiene el script 
+con la lógica de negocio que has desarrollado en tu lenguaje de programación, el proceso leerá el archivo de datos y ¿qué es lo que 
+tendrá que hacer? no puede volcar el archivo de datos en un solo servidor, ya que, cada uno tiene 100 GB, así que habría que partir el 
+archivo de datos en 3 partes, 100 GB en un server, 100 GB en otro server y 100 GB en otro server y luego de manera paralela mandar a 
+ejecutar el script en estos 3 servidores. Entonces, conceptualmente vemos que esto funcionaría, pero realmente aquí nos estamos creando 
+otro problema, esto de distribuir cada parte del archivo entre diferentes nodos del clúster y mandar a ejecutar el proceso entre 
+diferentes nodos del clúster y luego las resultantes parciales se unan en uno de los nodos no es algo que se implemente de manera 
+automática, tú como desarrollador vas a tener que agregar en tu script la lógica de distribución de carga de trabajo, eso es lo que se 
+implementa en los clusters. Para poder distribuir la carga de trabajo sobre un clúster, es decir, sobre sus servidores, tú como 
+desarrollador tendrías que implementar esa lógica, ahora eso tampoco es tan simple de hacer. ¿Qué problemas comunes tienen los 
+clusters? por ejemplo, digamos que el proceso se toma 3 horas en ejecutarse, y lleva 2 horas y luego de esas 2 horas, pues hay un 
+parpadeo en la red o simplemente el equipo que está encargado de esta infraestructura no gestionó bien este servidor y por alguna razón 
+perdemos este server, entonces, también perderíamos la parte que se estaba procesando en ese servidor, ¿qué debería hacerse en ese 
+caso? vamos a agregar al proceso una lógica de gestión de excepciones, vean como cada vez el script se hace más complejo, negocio te 
+había pedido algo, pero por problemas técnicos hay que colocarle todavía más código que nada tiene que ver con la necesidad de negocio, 
+realmente no es un código que aporte valor al negocio y esto va a ser muy importante, se supone que la lógica de negocio es el código 
+que representa esa necesidad de negocio, pero por impedimentos técnicos pues hay que ponerle más cosas al script, por ejemplo, la 
+lógica de gestión de excepciones, tendríamos que programar: “ … oye si una parte del proceso cae en un servidor buscamos un server que 
+esté disponible y relanzamos esa parte en ese otro servidor … “ y para eso, por supuesto hay que programar, tampoco es tan fácil de 
+programar. Por lo tanto, digamos que un clúster nos da una infraestructura escalable, es decir, si queremos tener más potencia, pues, 
+simplemente instalamos más servidores, pero eso no nos libera de los problemas que hay en la parte de la programación, entonces, ¿qué 
+es lo que pasó? este concepto de clusters existe desde los años 60 y así se utilizaba, el problema es que nuevamente no eran procesos 
+escalables, lo que si era escalable era la infraestructura, más potencia más nodos, pero el proceso no, porque, mientras más datos 
+venían pues habría que agregar más código a la necesidad de negocio, código técnico que nada tenía que ver con el problema de negocio. 
+Este problema se empezó a ser frecuente alrededor de los años 2004 y 2006, las grandes empresas como Google, Microsoft, Oracle y muchas 
+otras empresas que eran las top tecnológicas de esos años empezaban a tener estos problemas para sus procesos y decían: “ … oye yo en 
+mi empresa pues tengo ya varios procesos y en estos procesos cada vez estamos procesando más volumetría y ya se está volviendo 
+inmanejable la codificación y mantenimiento de esos códigos … “ todas estas empresas tenían eso en común, así que dijieron: “ … ¿qué 
+podemos hacer para solucionar este problema? Se sentaron y dieron una definición. Vamos a definir cómo debería ser la tecnología ideal 
+que resuelva todos estos problemas. Lo primero que vamos a hacer es, de acuerdo, el concepto de cluster si nos sirve, ahí ya tenemos 
+resuelta la escalabilidad de la infraestructura, ya que, si necesitamos más potencia pues simplemente compramos más servidores y los 
+ponemos dentro del cluster, así que, vamos a basarnos en el concepto de infraestructura de clúster, ya que, aquí podemos escalar con 
+tantos servidores como queramos. Lo otro que definieron es también lo siguiente, el problema es que cuando un desarrollador implementa 
+su lógica de negocio, los desarrolladores no ven al clúster como un todo, sino, como un conjunto de servidores. ¿Qué les parece si 
+hacemos lo siguiente? vamos a definir un clúster especial, el cual haga que los desarrolladores lo vean como si fuese un todo, ya no 
+como un conjunto de servidores. ¿Eso qué significa? digamos que tenemos 10 servidores de 100 GB de RAM cada uno, entonces, el 
+desarrollador va a ver al clúster como si fuese un súper servidor de 1000 GB de RAM en total, entonces, pues el desarrollador ya no ve 
+al clúster como un conjunto de servidores separados, si no, como un gran súper servidor que tiene toda la potencia computacional que 
+sería la suma de las potencias de los servidores que hay dentro. Entonces, dijeron: “ … de acuerdo … “ esa tecnología debería funcionar 
+de esa manera, el desarrollador no va a haber al clúster como un conjunto de servidores, sino, como un único gran súper servidor. 
+Entonces él solamente se dedica a programar lo que negocio les haya pedido. Ahora, vamos a ejecutar algo, aquí tenemos el archivo de 
+300 GB de datos y aquí mandaremos a ejecutar el proceso, lo primero que hay que hacer es, si se dan cuenta, un clúster va a tener mucha 
+potencia y quizá el día de hoy no necesitemos toda la potencia del clúster para el procesamiento, por ejemplo, podríamos reservar 
+solamente 300 GB de RAM, entonces, vamos a reservar un 30% de la potencia del clúster. Esta tecnología que estamos definiendo y por 
+supuesto aún no existe qué le debería de permitir al desarrollador, decir lo siguiente: “ … a ver ¿cuánto vamos a procesar el día de 
+hoy?, 300 GB de datos, entonces, el día de hoy vamos a reservar el 30% de la potencia del clúster y el otro 70% estará libre para que 
+otros desarrolladores trabajen. Al día siguiente negocio viene y te deja un archivo de 400 GB de datos y te dicen: “ … la lógica de 
+negocio es la misma no vas a cambiar ni una línea en tu código, solo que ahora hay más datos, de acuerdo, dame 1 segundo, el día de 
+ayer en el porcentaje de reserva del clúster había puesto 30%, porque, me diste 300 GB y eso es el 30% de esta potencia del cluster, 
+pero el día de hoy me estás dando 400 GB y voy a necesitar más potencia, dame 1 minuto para adaptar el script … “. Ahora el script que 
+es lo que va a decir: voy a ir a la línea de reserva de potencia del clúster y le diré ahora quiero que diga “dame un 40%” … “, 
+entonces la propia tecnología que gestiona el clúster debería de reservar ese 40%, quizá de estos cuatro servidores o quizá de estos 
+cuatro de aquí o quién sabe de qué servidores, eso ya sería trabajo de la propia tecnología que gestiona el cluster. Para simplificar 
+digamos que son estos cuatro servidores, entonces el desarrollador antes de mandar a ejecutar solo debería de modificar una línea, la 
+línea que indique cuánta potencia del clúster quiere reservar, en este caso “ … ya dame 1 segundo y lo pongo en 40% … “. Mañana viene 
+negocio y te deja un archivo de 200 GB y te dice: “ … ah ok dame 1 segundo voy a entrar a mi script y ahora el porcentaje de reserva 
+es un 20%, porque, solo necesitamos eso … “, entonces, esta tecnología que debía cumplir como segundo requisito, que fácilmente al 
+desarrollador le permita reservar cierta potencia del clúster en función de la volumetría que este va a procesar. Por supuesto, que 
+aquí lo estoy poniendo como algo tan simple donde voy una línea y la modifico, por ejemplo, de 40% a 20%, realmente no es así, hay más 
+código que colocar, pero es algo que toma de 5 a 10 minutos en configuración y ya no te va a tomar varios días o semanas en adaptar. 
+Una vez que hemos reservado la potencia del clúster, digamos 400 GB el día de hoy, dame el 40%, ¿qué es lo que debe hacer esta 
+tecnología que gestiona el cluster? el tercer punto es que, de acuerdo, se seleccionó estos cuatro servidores, la propia tecnología 
+del clúster tomará la que tú hayas codificado y la distribuirá entre esos servidores que ha seleccionado, igual con el archivo de 
+datos, hará esa distribución de carga de trabajo de manera automática, ejecutará esos procesos en esos servidores y en alguno juntarán 
+las resultantes parciales y te dirán listo ya terminé de procesar. 
