@@ -187,4 +187,389 @@ Una vez que hemos reservado la potencia del clúster, digamos 400 GB el día de 
 tecnología que gestiona el cluster? el tercer punto es que, de acuerdo, se seleccionó estos cuatro servidores, la propia tecnología 
 del clúster tomará la que tú hayas codificado y la distribuirá entre esos servidores que ha seleccionado, igual con el archivo de 
 datos, hará esa distribución de carga de trabajo de manera automática, ejecutará esos procesos en esos servidores y en alguno juntarán 
-las resultantes parciales y te dirán listo ya terminé de procesar. 
+las resultantes parciales y te dirán listo ya terminé de procesar. Vean entonces que una tecnología de este tipo nos facilitaría mucho 
+el desarrollo, porque, ¿qué es lo que haríamos? vamos a codificar el proceso con 10 MB que negocio me ha dado de ejemplo, ahí 
+probablemente con reservar solo un servidor sería suficiente y trabajamos así. Terminamos y le decimos: “ … listo negocio ya tenemos 
+esa necesidad del reporte que tú me habías pedido, ahora sí dame la volumetría real … “ negocio viene y te dice: “ … vamos a procesar 
+300 GB, en ese caso necesitamos un 30% de la potencia del cluster … “ que ya verá el clúster de qué servidores saca eso y la propia 
+tecnología de cluster distribuirá tu proceso en esos servidores, es decir, implementa la lógica de distribución de carga de trabajo, 
+pero, ya de manera automática. Si al día siguiente esa volumetría crece, pues vamos a la sección de reserva de recursos computacionales 
+y le asignamos la nueva reserva que necesitemos en función de esa volumetría. Y ¿qué pasa si un día negocio te deja 1500 GB de datos a 
+procesar? pues el clúster sería pequeño, pues, no hay problema vamos a traer 5 servidores nuevos, listo, ya tenemos 1500 GB, vamos al 
+script , ¿cuánto quiero? pues el 100% de la potencia del clúster, o sea, pues 1500 GB de memoria RAM que tenemos y listo todo se hace 
+de manera automática. Vean entonces que una tecnología de este tipo facilitaría mucho la escalabilidad de los procesos, el proceso, lo 
+que tu implementes, ya no va a depender de la volumetría, ya que, esta propia tecnología en función de la reserva que tú hagas pues 
+paraleliza tu código sobre esos servidores, entonces, para ti como desarrollador te es más fácil, codificas una vez y luego si viene 
+más volumetría pues reservas más potencia del cluster  y el propio clúster distribuye su carga de trabajo de manera automática. 
+Entonces, estas grandes empresas como Google, Microsoft y otras en esos años dijeron: “ … perfecto eh esta es la tecnología que nos va 
+a ayudar … “, por supuesto que todo esto lo hicieron por medio de definiciones, en el día uno no existía nada y esto dijeron: “ … y 
+¿qué nombre le ponemos a esta tecnología? como está relacionada con la volumetría de los datos, es decir, mira puede que vengan más 
+datos, entonces está relacionado con el procesamiento de grandes cantidades de datos o en inglés Big data y por eso decidieron ponerle 
+este nombre a las tecnologías que nos permiten tener procesos que puedan escalar en el tiempo en función de más volumetría. Dijeron: 
+“ … perfecto, entonces, ya no vamos a trabajar con clusters clásicos en donde hay que distribuir manualmente la carga de trabajo, sino, 
+que vamos a trabajar sobre clusters de big data … “, es decir, clusters que cumplan todo el concepto que hemos definido. Así que todas 
+estas grandes empresas empezaron a implementar este concepto, por ejemplo, Google tomó este pliego conceptual e hizo su propia 
+implementación para gestionar cluster de big data conocida como GFS y así pues varias grandes empresas tomaron el concepto e 
+implementaron esas tecnologías que definían esos conceptos. Algunas de ellas eran propietarias, es decir, solo Google la tenía o solo 
+Microsoft, no las podías descargar en internet, pero como todo en la vida también habían proyectos de software libre y de hecho habían 
+muchos en esos años. Uno de ellos era HADOOP. En su momento habían muchos proyectos de software libre que implementaban el concepto de 
+Big data, pero de todos ellos el que era más fácil de utilizar y el que mejor usaba eficientemente los recursos del clúster era HADOOP, 
+entonces, como HADOOP era fácil de utilizar y como usaba muy bien los recursos del clúster, se convirtió en el estándar de software 
+libre para gestión de clúster de Big data y se popularizó mucho en la comunidad, tanto así que incluso hasta el día de hoy, Hadoop es 
+el estándar de gestión de clusters para Big data. Hasta ahí entonces bien, ya tenemos una tecnología que va a implementar todos estos 
+conceptos. Pero, y ¿qué tiene que ver Hadoop con Spark? vamos a ese punto. Entonces ya tenemos una tecnología que va a gestionar un 
+clúster para que se comporte como un cluster de big data. ¿Cómo funciona Hadoop? Hadoop tiene cuatro componentes, de esos cuatro 
+componentes uno de ellos al día de hoy se reemplaza por Spark, pero vamos a entender bien la arquitectura que se maneja por detrás. Lo 
+primero que hay que saber respecto a Hadoop es que gestiona los servidores de un cluster, pero ¿qué es un servidor? desde un punto de 
+vista de procesamiento hay 3 recursos computacionales que nos importan de los servidores: su capacidad de disco duro, la cantidad de 
+memoria RAM que tenga el servidor y los núcleos de CPU que tenga este servidor. Por ejemplo, hablando de servidores linux empresariales 
+clásicos podríamos tener 10 TB de disco duro, 100 GB de memoria RAM y 40 núcleos de CPU. Aquí también hay un punto técnico que todavía 
+lo vamos a ver en código, ya que, aún faltan varios conceptos, pero luego de haber codificado esos conceptos se va a entender todavía 
+mucho mejor. Cuando hablamos de la CPUs hay 3 niveles, una cosa son las CPUs, otra cosa son los núcleos de CPU, por ejemplo, te puedes 
+comprar tu laptop y es multinúcleo, tiene 2 CPU de cuatro núcleos cada CPU y tendrías 8 núcleos de CPU en total. Pero hay un término 
+más, que es el que se utiliza para la codificación que son las Virtual CPU (vCPUs) que son núcleos de CPU emulados sobre una misma CPU. 
+De esto todavía hablaremos más a detalle cuando hagamos tuning computacional en el código, para paralelizar aún más los procesos. Más 
+adelante van a entender que hay un factor de paralelización del código, podemos hacer con la misma cantidad de CPUs el código hasta 20 
+o 30 veces más rápido, dependiendo del factor de hyper-threading, entonces, ya hay todo un detalle  técnico, pues, que sería demasiado 
+verlo en este momento, el objetivo del día de hoy es una introducción teórica de todos estos conceptos. Así que ahora voy a hablar que 
+simplemente tenemos 40 núcleos de CPU, aunque el término correcto más adelante sabrá que son vCPUs. Esa es la potencia de este servidor 
+y para el disco duro se tiene 100 GB de RAM. Cuando construyamos un clúster podemos poner diferentes servidores, podremos poner otro 
+servidor, con otra capacidad de disco duro, de memoria RAM y otra cantidad de núcleos de CPUs. Pero para simplificar la explicación 
+vamos a asumir que pongamos 10 servidores y todos tienen estas características para que se pueda hacer con un cálculo de multiplicación. 
+Recordemos que la facilidad que nos da un clúster de big data es que ya nos olvidamos si por detrás hay 20 servidores o 50 servidores, 
+solamente nos interesan los números total. Como teníamos 10 servidores de 10 TB cada uno, pues en el clúster tendríamos 100 TB de 
+almacenamiento en total para poder guardar todo lo que queramos. Respecto a la memoria RAM, ¿cuánta RAM en total tendría el clúster? 
+pues lo mismo, son 10 servidores de 100 GB de RAM cada uno, pues la potencia total para procesar en la memoria RAM sería de 1.000 GB, 
+es decir, 1 TB de memoria RAM. Y lo mismo pasaría con los núcleos de CPU, es como si tuviéramos solo una CPU, cómo había 10 servidores 
+de 40 núcleos de CPU es como si tuviéramos un súper servidor de 400 núcleos de CPU. Tú como desarrollador vas a ver al clúster con esta 
+capacidad:
+
+-	100 TB de almacenamiento en disco duro
+-	1 TB de memoria RAM
+-	400 núcleos de CPU
+
+Es como si fuese solo un server con esa potencia, aunque por detrás ya sabemos que todo está distribuido en diferentes servidores. Para 
+que esto sea posible también sabemos que Hadoop es el encargado, es quien hace esta configuración, permite que el desarrollador vea al 
+cluster como si fuese un gran super servidor con esa potencia, de hecho, cuando ustedes escuchen que en China o en Estados Unidos o en 
+Europa, han inventado un súper servidor de 96 TB de memoria RAM, realmente están haciendo referencia a un clúster de big data. ¿Cómo 
+hace posible esto Hadoop? Hadoop tiene diferentes módulos. Tiene un módulo para gestionar los discos duros de los diferentes servidores, 
+ese módulo es conocido como HDFS, qué significa HADOOP DISTRIBUTED FILE SYSTEM o en español el sistema de archivos distribuidos de 
+Hadoop, entonces, ese es el módulo que te permite ver a todos los discos duros como si fuese solo un gran disco duro. Luego, también 
+recordemos que para desarrollar que tenemos que hacer, hay que separar un 50% de la potencia del clúster o un 20% o un 30% o lo que se 
+necesite. Hadoop tiene un módulo conocido como YARN, y significa YET ANOTHER RESOURCE NEGOTIATOR o en español si otro negociador de 
+recursos. ¿Qué es lo que permite hacer el modelo de YARN? YARN gestiona la memoria RAM y los núcleos de CPU y él es el que permite 
+hacer esa reserva, de hecho, HDFS en la nube, por ejemplo, algunos lo reemplazan con el S3 de Amazon, entonces, HDFS al día de hoy 
+puede que sea opcional en algunos momentos, pero por ejemplo, YARN es tan bueno que hasta el día de hoy se utiliza, una configuración 
+de Spark con  YARN es la manera clásica de procesamiento, aunque también es modular lo podemos reemplazar por otro gestor de recurso 
+pero al final hace lo mismo, reserva cierta potencia del clúster. ¿Qué nos está faltando? Sobre HDFS, el sistema de archivos 
+distribuidos de Hadoop, vamos a subir los archivos que queremos procesar, negocio te deja un archivo de 300 GB de datos, bien, lo 
+tendremos que poner aquí, ahí está el gran archivo que queremos procesar. El sistema de archivos distribuidos sirve para eso para dejar 
+los archivos grandes que negocio te dejan para procesar. ¿Cuál es el segundo paso? una vez que sobre el sistema de archivos haz dejado 
+los archivos que necesitamos procesar, lo siguiente es procesarlos, pero no necesitamos el 100% de la potencia del clúster, quizá el día 
+de hoy sólo necesitemos un 20% de la potencia del cluster. ¿Con qué módulo reservamos eso? Con YARN, de alguna manera en código a YARN 
+le tenemos que decir: dame el 20% de la potencia del cluster y listo ya tenemos reservado, que acá sería, por ejemplo, 200 GB de memoria 
+RAM, y aca serían 80 núcleos de CPU. Una vez que hemos hecho la reserva ahora sí vamos a ejecutar nuestro código. ¿Tú como desarrollador 
+cómo vas a codificar? como dijimos en un principio existen diferentes lenguajes de programación, por ejemplo, existe Scala, R, .net o 
+Python o Java, hay muchísimos lenguajes. Estos lenguajes ya sabemos que no se pueden paralelizar en los 3 o 4 servidores que hayamos 
+reservado, sino que, en el medio tiene que haber un motor que distribuya la carga de trabajo de manera automática, ese motor recibirá la 
+instrucción del lenguaje y sobre los servidores que hayas reservado, pues ejecutará esa instrucción distribuyendo la carga de trabajo 
+de manera automática. Hadoop tiene un módulo conocido como MapReduce que es el gestor de distribución de carga de trabajo sobre el 
+clúster. ¿Cuál es el objetivo de mapReduce? recibir la sentencia en el lenguaje que ya es codificado y distribuir la carga de trabajo 
+de esa sentencia entre los servidores que hayas reservado. Cuando tú instalas, Hadoop, por defecto, para gestionar un clúster por 
+defecto te vas a encontrar con esos 3 módulos: HDFS para la gestión de discos duros, YARN para la gestión de memoria RAM y CPU y 
+mapReduce para la gestión de distribución de carga de trabajo automática. Este tipo de configuración se popularizó desde el año 2006 
+hasta aproximadamente el año 2010, era el estándar. Todo el mundo que quería hacer big data, al menos con software libre, descargaba 
+esto y pues aplicaba esta configuración sobre su clúster y funcionaba. Pero ¿cuál era el problema? mapReduce era muy bueno, pero nació 
+pues pensando en otro tipo de necesidades para esas épocas. El problema es que desde el año 2010 en adelante comenzaron a surgir otro 
+tipo de necesidades, por ejemplo, se hablaba mucho del procesamiento analítico, y por ejemplo, se habla mucho de 2 tipos de 
+procesamiento analítico: de machine learning o de Deep learning. También se estaba hablando mucho de bases de datos NoSQL y esto pues 
+en sí no es un curso de NoSQL, porque, ahi literalmente tendríamos que ver gestores de bases de datos y  nosotros estamos más 
+interesados en procesar con Spark y Scala, pero para ponerlo en términos simples si hablásemos de gestores NoSQL, podemos dividir los 
+datos en: datos estructurados como un excel o una tabla de base de datos y datos semiestructurados como archivos JSON y archivos XML y 
+datos no estructurados como fotografías, videos, audios. Entonces, ya en estos años pues habían más necesidades, inicialmente Hadoop 
+nació con la filosofía de hacer procesamiento de datos estructurados que crecen en el tiempo y en esta época pues estuvo bien, pero del 
+2010 en adelante ya habían otros tipos de necesidades y mapReduce el cual era el motor que distribuía carga de trabajo, estaba orientado 
+a este tipo de distribución, no a estas nuevas necesidades y de hecho empezaron a salir más, procesamiento en tiempo real, procesamiento 
+de redes neuronales, flujos de ETL paralelizables y cada vez más cosas que ya pues mapReduce no daba la talla, no porque sea un mal 
+motor, sino porque, simplemente nació con una filosofía de esa época, pero ya era otra época y habían más necesidades. ¿Qué es lo que 
+pasó ese año? dijeron HDFS y YARN hasta el día de hoy funcionan bien, pero, mapReduce ya no está funcionando tan bien, porque, ahora hay 
+otras necesidades. Así que nuevamente se repitió la historia, muchos proyectos de software libre empezaron a construir un nuevo módulo 
+para Hadoop, para reemplazar a mapReduce, entonces pues había muchas propuestas, algunas como todo en la vida eran buenas y otras no 
+tan buenas. De todas estas propuestas la que mejor reemplazaba el módulo de mapReduce, era fácil de utilizar y a la vez gestionaba bien 
+los recursos del clúster era Spark. Así que desde el 2010 en adelante comenzaron a sacar el módulo de mapReduce para la distribución de 
+carga de trabajo y vamos a poner un mejor modulo, que en la comunidad es el que mejor ha demostrado comportarse, al menos, en software 
+libre es Spark. Y ahí es donde entra nuestro punto de interés y dijeron: “ … bien, ahora cómo motor de distribución de carga automática 
+usaremos Spark … “. ¿Cómo programamos sobre este motor? pues sigue la misma filosofía que el motor antiguo de mapReduce, usa el lenguaje 
+que mejor se adapte a la necesidad. Este motor de carga de trabajo tiene APIs para diferentes lenguajes, puedes usar R,  Scala, .net, 
+Python, Java, nodeJS, incluso hasta hay módulos para PHP, entonces usa el lenguaje que a ti te guste, porque no es que haya un mejor 
+lenguaje, ya sabemos que cada lenguaje se adapta a cierta necesidad y Spark se empezó a popularizar y se convirtió en el estándar de 
+distribución de carga de trabajo sobre los clústers. Al día de hoy esta es la configuración que se utiliza para la gestión de un 
+clúster. Ya hemos llegado al punto en donde hemos colocado Spark. Ahora ¿qué es lo que pasó? pues Spark nos permite hablar con el 
+clúster con diferentes lenguajes de programación. Spark solo es el motor de procesamiento, no trae un sistema de archivos distribuidos, 
+necesita de uno, tampoco trae un gestor de recursos, de hecho, trae uno incrustado pero es solamente para probar, no se recomienda usar 
+en modo productivo, entonces, necesita también de un gestor de recursos que permita separar la potencia del clúster. Así que Spark sí o 
+sí,  tiene que apoyarse en otras tecnologías, pero por un momento vamos a aislar solo este módulo. ¿Qué es lo que pasa? pues en esas 
+épocas todo el mundo usaba sus lenguajes de programación favoritos Scala, R, .net, Java, Python, entonces, ¿qué dijieron?: 
+
+En esta filosofía del mundo del big data hay 2 grandes tipos de procesos que podemos implementar en tecnologías de big data, todos estos 
+procesos de reportería, programación funcional, redes neuronales, Deep learning, machine learning, programación real time, procesamiento 
+semi estructurado, hay muchos tipos de procesos, pero los podemos agrupar en 2 grandes procesos: procesos de data engineer o en español 
+de ingeniería de datos o procesos de data scientist o en español de ciencia de datos. Por ejemplo, los procesos de tipo funcional o de 
+real time o procesos de programación semi estructurada o no estructurada, entran dentro de la clasificación de procesos de ingeniería 
+de datos. Los procesos de ciencia de datos, por ejemplo, los procesos de ingeniería datos están orientados a la preparación de los 
+datos, a leerlos, a limpiarlos, a modelarlos, a estructurarlos y a optimizar cruces de datos. En cambio los procesos de ciencia de 
+datos están orientados a descubrir patrones dentro de los datos, por ejemplo, los procesos de machine learning o Deep learning. 
+Entonces se dieron cuenta de esto, bien podemos agrupar todos los procesos en dos grandes tipos o de ingeniería de datos o de ciencia 
+de datos, en el primero preparamos los datos y en el segundo se evalúan. 
+
+
+Entonces, bien y ¿qué lenguajes de programación se adaptan mejor a este tipo de procesos?
+-----------------------------------------------------------------------------------------
+
+Haciendo una evaluación ya muy técnica, vamos a poner todo esto en los servidores, vamos a ejecutarlo y vamos a ver qué tanta RAM y que 
+tanta CPU consumen y si podemos alcanzar más nivel de paralelización, entonces en esencia realmente es un poco más complicado, pero lo 
+estoy simplificando, y se dieron cuenta de lo siguiente: el motor de Spark está implementado en Scala, cuando crearon Spark dijeron ¿en
+qué programamos? en Scala. 
+
+
+¿Cuál es la ventaja que tiene Scala?
+------------------------------------ 
+
+Scala tiene una sintaxis muy simple, Python, por ejemplo, de la gran mayoría de lenguajes de programación que existen, Python destaca 
+en que su sintaxis es muy simple, el problema es que no gestiona también los recursos de los servidores, entonces, dijeron: el lenguaje 
+Java es muy bueno en la gestión de recursos, podríamos crear Spark en el lenguaje de Java, el problema es que Java tiene una sintaxis 
+muy compleja que dificultaría que este proyecto cada vez aumente más, así que vamos a utilizar un fork de Java conocido como Scala. 
+
+
+¿Qué es lo que permite Scala?
+----------------------------- 
+
+te permite codificar con una sintaxis muy parecida a Python, pero que cuando le das al botón de compilar, se compila en código Java y 
+por lo tanto se ejecuta sobre la máquina virtual de Java, es decir, que cuando Java recibe las líneas de comandos, Java ni cuenta se da 
+que por detrás todo se implementó en el lenguaje de Java, sino que, Java lo entiende como si fuera código Java. Por eso es que Spark 
+fue implementado en Scala, Scala tiene una sintaxis parecida a Python lo cual lo hace fácil en su programación y al ejecutarlo puedes 
+ejecutarlo sobre la máquina virtual de Java, es decir, aprovechamos la robustez que tiene Java. 
+
+Entonces dijeron: “ … de acuerdo ya que Spark ha sido implementado en Scala, realmente todo debería ser implementado en Scala, tanto 
+los procesos de ingeniería de datos como ciencia de datos, ya que habla de manera nativa con el propio motor de Spark, en cambio el 
+resto de lenguajes pues tienen que tener un proceso de traducción que hará que vayan un poco más lento, ¿cuánto? dependiendo del tipo 
+de proceso de un 10% a un 15% más lento, aunque a veces eso no se nota pero ese es el peor de los casos. De acuerdo, todo debería estar 
+en Scala … “. Entonces esa sería la respuesta. Pero nuevamente vamos a la vida real ¿qué es lo que pasa? antes de que saliera todo esto 
+del motor de Spark y del mundo del big data, ya las personas hacían procesos de machine learning y Deep learning, no las hacían en 
+clusters de big data porque no existían, los hacían o en su computadora o en servidores o ellos mismos en un clúster paralelizaban los 
+algoritmos analíticos implementando por cuenta propia esa lógica de distribución de carga de trabajo. Entonces antes del big data ya 
+existía el mundo de la ciencia de datos, ya se hacían procesos de machine learning y deep learning, de hecho, por ejemplo, las redes 
+neuronales existen desde los años 50, no son algo nuevo, ya eso se viene haciendo desde hace mucho tiempo. ¿Qué es lo que pasaba? en 
+esas épocas en donde aún no existía el mundo del big data, el lenguaje que se popularizó para la implementación de procesos de ciencia 
+de datos, aún no en entornos de big data, simplemente no existía, fue Python, entonces ¿por qué? porque Python tenía una sintaxis muy 
+flexible, era muy raro ver a personas haciendo ciencia de datos en Java, construir una red neuronal ya de por sí es muy compleja, ahora 
+hacerlo sobre Java hace aún más complejo su desarrollo. Es por eso es que los científicos de datos antes de la era del big data, pues, 
+todo lo hacían en Python. ¿Eso que hizo? que en la comunidad de Python pues habrían muchos frameworks de desarrollo para la parte de 
+ciencia de datos sobre Pyrthon, literalmente tenemos miles de frameworks, entonces ya la comunidad de Python para la ciencia de datos 
+por medio de librerías y frameworks que se fueron creando pues se hizo muy grande. Luego llegaron las tecnologías de big data y por 
+supuesto que Scala también trae framework para ciencia de datos, pero ¿cuál era la diferencia? pues simplemente Python llegó antes, y 
+ya habían muchos proyectos que ya estaban funcionando sobre código Python. Entonces Scala desde un punto de vista técnico era más 
+rápido, pero la realidad es que no tenía tantos frameworks para el desarrollo de ciencia de datos como si los tenía Python. Así que 
+¿qué dijieron? de acuerdo, si Scala hubiese salido en un principio antes que Python y toda la comunidad hubiera construido estos 
+frameworks en Scala, bueno, pues ahí la recomendación hubiera sido para hacer ciencia de datos, hubiese sido Scala, pero como esa no 
+fue la realidad, dijeron: “ … Ok, si quieres hacer ciencia de datos sobre un clúster que tenga Spark, pues, utiliza Python, no porque 
+sea más rápido que Scala, sino porque, simplemente llegó antes y ya tiene muchísimos frameworks de desarrollo para para ciencia de 
+datos … “. Por ejemplo, entre el más popular se encuentra Tensorflow, cosa que no se puede integrar tan fácilmente con Scala y en Python 
+sí, entonces ya esto, por ejemplo, para hacer redes neuronales se utiliza mucho o para hacer temas de deep learning e inteligencia 
+artificial, entonces, dijeron: “ … de acuerdo, la definición será la siguiente: para construir procesos de ingeniería de datos “Scala”, 
+ahí siempre hay justificación, pero para construir procesos de ciencia de datos “Python”, por el simple hecho de que aquí hay más 
+librerías y el desarrollo se hace más fácil. Eso no significa que no sea posible hacer este tipo de procesos en Scala, pero en la medida 
+de lo posible hay que tratar de hacerlos en Python, porque, este tiene más librerías. Vean entonces cuál fue la definición, en resumen 
+de acuerdo con Spark pues podemos hacer diferentes tipos de procesos, pero hablemos del mundo de big data, clásicamente se dividen en 
+procesos de ingeniería de datos, es decir, de cualquier cosa que no sea analítica, cualquier cosa que no sea Machine learning o Deep 
+learning va en Ingenieria de datos y aquí Scala es la mejor opción. Pero también pues tenemos los procesos de ciencia de datos, es 
+decir, son 3 grandes tipos de procesos en la ciencia de datos: procesos de machine learning, procesos de deep learning y procesos de 
+inteligencia artificial y aquí se utilizará Python porque ya hay muchísimos frameworks que fueron construidos pensando en ellos. 
+Entonces de esta manera es como los entornos de desarrollo se dividen el trabajo, ingenieros de datos con Scala y científicos de datos 
+con Python, aunque por supuesto nada impide que utilicen Python para ingeniería de datos y Scala para ciencia de datos. Y ¿qué pasa con 
+el resto de lenguajes de programación, como por ejemplo R, SQL, .NET? pues ya están más acotados, por ejemplo, R está muy orientado a 
+procesos estadísticos, digamos que quieres implementar un proceso para sacar una muestra poblacional según cierta tendencia o vamos a 
+implementar la regla de distribución normal o distribución de una campana o distribución de chebyshev que son cosas ya estadísticas, 
+literalmente esto le servirá a alguien que se dedique en la carrera de estadística. ¿.NET dónde se utiliza? digamos que estás en un 
+ecosistema de Windows, donde absolutamente todo utiliza Windows, en este caso nos convendría las librerías de Spark para .NET, ya que, 
+es una empresa que solamente se dedica a trabajar con SQL Server o con el ISD de Microsoft, entonces, como es el ecosistema de Windows 
+quizás .NET se adapte mejor, entonces ya son casos un poquito más particulares. 
+
+Ya entendemos el concepto de big data, estos son los tipos de procesos que se implementan en las empresas al día de hoy. El concepto de 
+big data nos permite que los procesos sean escalables, eso ya lo habíamos visto. 
+
+
+¿Que implica que sean escalables?
+--------------------------------- 
+
+Que la lógica de negocio que hayas implementado en tu script, va a recibir volumetría que crezca en el tiempo, sin la necesidad de 
+modificar el script, solo la reserva computacional, hoy necesito el 10% del clúster y quizá mañana el 20%, y si el clúster se queda 
+pequeño pues traemos más servidores. Eso significa ser escalable. 
+
+
+¿Cómo implementamos el concepto de big data?
+-------------------------------------------- 
+
+Necesitamos un ecosistema tecnológico de big data que implemente todo esto, desde un punto de vista del software libre, Hadoop es el 
+estándar del ecosistema el día de hoy, podemos descargar Hadoop desde su repositorio oficial e instalarlo en un cluster. También sabemos 
+que Hadoop tiene 3 modulos: 
+
+-	HDFS para la gestión de los discos duros 
+-	YARN para la reserva de: dame cierta cantidad de memoria RAM y cierta cantidad de núcleos de CPU. 
+-	mapReduce para distribuir la carga de trabajo sobre la reserva que hayamos hecho con el lenguaje que más nos guste, pero también 
+    sabemos que al día de hoy esto ha sido reemplazado por Spark. 
+
+
+¿A qué se debe? 
+---------------
+
+A que simplemente mapReduce nació con una filosofía de procesamiento estructural, pero al día de hoy hay otras necesidades más complejas 
+que las empresas tienen y Spark fue la que mejor implementó esas necesidades. 
+
+Lo siguiente que sabemos es y ¿qué lenguaje de programación usamos? también ya deberíamos estar en la capacidad de responder esa 
+pregunta, existen muchos lenguajes pero hablando de procesos de big data básicamente los clasificamos en procesos de ingeniería de datos 
+(data engineer) o procesos de ciencia de datos (data scientist). Lo ideal sería que ya que Spark fue construido con Scala y se compiló 
+en Java, lo ideal sería hacer todo con Scala, pero lo que paso en la realidad es que como Python ya tenía muchas librerías de ciencia de 
+datos pues Python se quedó con el mundo de la ciencia de datos y Scala con el mundo de la ingeniería de datos, pero también sabemos que 
+nada impide usar Scala para hacer ciencia de datos o viceversa, Python para implementar procesos de ingeniería de datos, si el equipo 
+lo conoce y tiene las librerías para hacerlo, adelante. 
+
+Ahora escalemos a un siguiente nivel, ya hemos entendido dónde está el término big data, el término de Hadoop y el término de Spark y 
+el término de Scala, en toda esta mesa de conceptos que estamos construyendo. Pero nuevamente hablemos de la realidad de las empresas. 
+¿Qué es lo que va a pasar? el problema que tienen los clusters de big data es que son muy costosos desde un punto de vista monetario. 
+Digamos que para que la empresa funcione, no sabemos nada de Sizing o de Tunning computacional, así que digamos que simplemente después 
+de hacer un Sizing, es decir, cuál es el tamaño del clúster que necesitamos, decimos: “ … oye mira para que la empresa funcione y sus 
+procesos corran en un núcleo de big data el cluster tiene que tener 10 servidores de 100 GB de RAM cada uno … “. De acuerdo son 
+servidores empresariales linux que van a estar orientados a estar encendidos 24/7, todo el día funcionando, ejecutando procesos en la 
+mañana, en la madrugada y ¿cuánto vale cada uno de estos servidores? dependiendo de las características del hardware pues 
+aproximadamente 30.000 USD. ¿Cuántos necesitamos? 10, para construir el cluster. Entonces el presupuesto inicial es de 300.000 USD. 
+Adicionalmente a esto, tenemos que contratar un equipo que se encargue de gestionar la infraestructura, hay que darle mantenimiento 
+para revisar que el sistema operativo funcione y eso significa tener todo un equipo que sea el encargado de administrar la
+infraestructura, 3 o 4 personas o los que sea necesario. ¿Anualmente cuánto nos cuesta el equipo? 100.000 USD y el mantenimiento de los 
+equipos nos cuestan otros 100.000 USD, por lo tanto, necesitamos una inversión inicial de 500.000 USD para empezar a hacer el proyecto 
+de Big data y cada año una inversión de 200.000 USD para pagarle al equipo que administra el clúster y el mantenimiento del clúster, 
+entonces, gerencia recibe esto y por ejemplo para Microsoft o para Amazon o para Google, puedes dicirles que en total son 500.000 USD y 
+para ellos no es nada y realmente te aprueban el proyecto de big data. Luego, pero salgamos de las top tecnológicas, vamos a algo un 
+poco más pequeño, un banco que tenga sucursales en varias partes del mundo. Le dices: “ … el proyecto de big data nos va a salir 
+500.000 USD este año y 200.000 USD el resto de del año … “ entonces el banco te puede decir: “ … bueno está un poquito caro, pero es lo 
+que hacen los grandes así que lo apruebo porque yo como banco tengo la espalda financiera … “ Ahora vamos a algo más pequeño que un
+banco, una cadena de supermercados o una microfinanciera o algo pues que no tenga una espalda financiera tan grande como la podría 
+llegar a tener un banco, le damos estos números y los más probable que te digan: “ … está bonito el concepto, pero es demasiado 
+dinero … “ y ahí murió el proyecto de Big data. Eso pasaba mucho entre los años 2006 y 2010 cuando esto salió y ahí es donde varias 
+empresas vieron una oportunidad de negocio, Microsoft dijo: “ … yo tengo una granja de servidores en todo el mundo con muchísimos 
+servidores que podría alquilar a bajos precios, por ejemplo, podría alquilar un server de 100 GB de RAM a 1 USD la hora …”, entonces, 
+¿cuánto necesitaríamos para construir nuestro clúster de big data? son 10 servidores a 1 USD la hora, la hora de ese clúster nos 
+saldría 10 USD, quizá el proceso que hemos implementado se toma 2 horas en ejecutarse, entonces, pagaríamos tan solo 20 USD, 
+alquilaríamos los servidores por 2 horas, mandamos ejecutar el proceso, el proceso termina, tenemos la resultante y liberamos los 
+recursos que hemos alquilado y pagaríamos tan solo 20 USD, saldría baratísimo. Ahora sí la gerencia nos aprobaría el proyecto. 
+Microsoft vió esa oportunidad, lo mismo Amazon tenía su granja de servidores y lo mismo Google. Así que crearon un modelo de negocio de 
+alquiler de infraestructura sobre internet o como clásicamente le llamaban en Estados Unidos “la nube”, vas a alquilar estos servidores 
+que viven en internet, que viven en la nube. Así que es un modelo de negocio Cloud. Microsoft creó su servicio conocido como AZURE, 
+Amazon creó su servicio conocido como AWS y Google creo su servicio conocido como GCP. Todos hacen lo mismo, te permiten alquilar 
+cierta potencia computacional a precios bajos, los usas solo por el tiempo que tengas que procesar y luego libera los recursos y en la 
+factura pues solo pagas por el uso que hayas hecho. 
+
+
+Patrones de diseños MULTI-CLOUD
+-------------------------------
+
+Cuando nosotros desarrollemos con Spark y Scala al código le da exactamente igual si se va a ejecutar en los servidores de Azure, de 
+AWS o de GCP, es solo infraestructura. Entonces el código tiene que ser agnóstico a la infraestructura o en otras palabras debe ser 
+MULTI-CLOUD, por lo tanto, todos los patrones de diseño que se aprenden al día de hoy son multi-cloud, es decir, que el código debe de 
+funcionar igual de bien en Azure, en AWS, en GCP o en cualquier otra nube que la empresa utilice. Todo lo que vamos a ver en 
+codificación va a ser múlti-cloud, es decir, si el día de hoy te toca un cliente que usa Azure, pues, desde el día uno ya vas a saber 
+cómo ejecutar todo esto sobre Azure o sobre AWS o sobre el GCP. Esto no significa que entonces el código siempre va a ser multi-cloud, 
+ya que, Azure, por ejemplo, tiene sus propias tecnologías propietarias que te pueden facilitar el desarrollo de tu codificación, igual 
+AWS e igual GCP. En una primera instancia para aprender de programación en entornos de big data sí es correcto que los patrones de 
+diseño sean multi-cloud ese es el objetivo de este curso. Pero una vez eso, pues ¿cuál sería el siguiente paso? dependiendo de la 
+empresa hay que saber cómo adaptarnos a cada tecnología de big data propietaria de cada ecosistema, una cosa será en Azure, otra en AWS, 
+otra en GCP. Esto hará que, pues, el desarrollo se acelere aún más, además también hay que saber integrarlos a las distintas nubes, 
+porque ellos tienen sus tecnologías propietarias. Así que ya después de esto, lo siguiente es particularizarlo, pues, a la nube en 
+específico en donde se vaya a trabajar. 
+
+También hay que entender algo más, otra tendencia que tienen las empresas es la siguiente, generalmente lo que queremos es alquilar la 
+infraestructura del procesamiento, no la de almacenamiento, así que clásicamente se trabajan con 2 infraestructuras: 
+
+-	Una permanente 
+-	Una volátil 
+
+¿Esto que significa? vamos a ponerlo en un ejemplo más concreto, aquí tenemos un sistema de archivos distribuidos por detrás habrá 20, 
+30 o 50 servidores con disco duro, pero nos da exactamente igual. Supongamos que tenemos 1000 TB de almacenamiento. Ahora esta es la 
+primera infraestructura que necesitamos, el sistema de archivos distribuidos. Clásicamente es HDFS, pero cada nube tiene su propia 
+tecnología propietaria, por ejemplo, AWS tiene al S3, Azure tiene a la WASBS y Google tiene al GS, Databricks tiene al DBFS, todos 
+hacen lo mismo, es simplemente el sistema de archivos distribuidos, de hecho, todas se basan en HDFS, solo que son tecnologías 
+propietarias ya de cada nube. Nos da exactamente igual cuál sea ese sistema de archivos, con todas vamos a hacer lo mismo. Negocio nos 
+da un archivo de datos a procesar, entonces, sobre el sistema de archivos vamos a crear algún directorio y vamos a subir el archivo de 
+datos dentro de ese directorio, entonces, por ejemplo, digamos que negocio nos deja los archivos: persona, empresa y transacción y pues 
+en la vida real negocio tiene muchas entidades de negocio. Para poner un concepto parecido al warehouse, en un warehouse hay miles y 
+miles de entidades, pues lo mismo pasa en los entornos de big data, tendremos la entidad persona, empresa, transacción, cliente, 
+producto, etc., todo lo que negocio necesite para funcionar. Acá habrá un directorio persona y ahí estará el archivo o archivos que 
+conforman a las personas, el directorio empresa que es la entidad de empresa, el directorio transacción y si hay 20.000 entidades, 
+pues, tendríamos 20.000 de estos directorios, es permanente, es la información que tiene la empresa, no es que esto se vaya a perder, 
+tiene que vivir de por vida hasta que la empresa decida borrar esos archivos de datos. Eso vive en una infraestructura, conocido como 
+el clúster del sistema de archivos distribuidos, es un clúster que está enfocado en solo en almacenar datos. 
+
+AHORA, VAMOS A PROCESAR, ESO SE HACE EN UNA SEGUNDA INFRAESTRUCTURA, CUANDO HAGAMOS PROYECTOS DE BIG DATA SIEMPRE COMO MÍNIMO DEBE 
+HABER 2 INFRAESTRUCTURAS SEPARADAS, LA PRIMERA DE ELLAS ES PERMANENTE EL SISTEMA DE ARCHIVOS DISTRIBUIDOS. Nunca se va a borrar este 
+clúster, debe de existir encendido siempre ¿por qué? porque ahí está la información que negocio tiene, la data que vamos a procesar. LA 
+INFRAESTRUCTURA DOS, POR OTRO LADO, ES VOLÁTIL, QUE ES LA INFRAESTRUCTURA DE PROCESAMIENTO. Por ejemplo, estamos en la nube, el día de 
+hoy tenemos que procesar 300 GB de datos de estas 3 entidades (persona, empresa, transaccion) de las 20.000 entidades que tenga la 
+empresa, solo nos interesa procesar estas 3 y son 300 GB de datos. De acuerdo vamos a crear un clúster en la nube de 3 servidores y 
+tendremos 300 GB de RAM y cierta cantidad de nucleos de CPU, volcamos la información desde el disco duro en la RAM, hacemos lo que 
+tenemos que hacer y tenemos la resultante y esa resultante la guardamos en el sistema de archivos distribuidos y listo, destruimos el 
+clúster y solamente pagamos por el tiempo que hayamos utilizado este Cluster. Por eso es que la infraestructura de procesamiento es 
+volátil, quizá el día siguiente vengan 500 GB de datos, ese día necesitaremos un cluster más grande y pues probablemente ese día 
+paguemos más dinero. 
+
+ASÍ QUE HAY QUE TENERLOS SEPARADOS SIEMPRE, INFRAESTRUCTURA DE ALMACENAMIENTO E INFRAESTRUCTURA DE PROCESAMIENTO. LA DE ALMACENAMIENTO 
+ES PERMANENTE, AHÍ ESTÁN LOS DATOS INPUT Y LOS DATOS OUTPUT. EN CAMBIO, EN LA INFRAESTRUCTURA DE PROCESAMIENTO ES VOLÁTIL, SE LEE LO 
+QUE SE DEBA DE PROCESAR, SE PROCESA Y LA RESULTANTE SE ESCRIBE EN EL SISTEMA DE ALMACENAMIENTO Y LUEGO DESTRUIMOS ESA INFRAESTRUCTURA Y 
+PAGAMOS POR EL TIEMPO QUE HAYAMOS USADO ESA INFRAESTRUCTURA, POR ESO ES VOLÁTIL. 
+
+
+Spark nos permite el procesamiento en Multi-Cloud
+-------------------------------------------------
+
+Esta es la configuración mínima que hay que tener, siempre separarlo en 2 infraestructuras. Ahora que hemos entendido esto vamos a ir 
+un siguiente nivel. En la vida real es probable que en las empresas, en algún momento tengan diferentes cuentas en la nube, a esto se 
+le conoce como ser multi-cloud, así que podríamos encontrarnos con el siguiente escenario, por aquí tenemos un sistema on-premise, 
+on-premise significa que la propia empresa compró los servidores en sus oficinas y los instaló, entonces, ahí tenemos ese sistema 
+gestionado por HDFS, con algunas entidades que la empresa cargo ahí. Y también tenemos la cuenta en nube con Amazon S3 y ahí también 
+hay algunas entidades que la empresa ha subido a Amazon y también por ahí tenemos a Azure, con su sistema de WASBS, que al final es lo 
+mismo. Y por ahí también tenemos a Google con su sistema GS de almacenamiento y ahí tenemos también las entidades, podría darse ese 
+caso. Digamos que estamos trabajando en un cliente que tiene Azure, entonces sobre Azure levantamos un clúster de big data de 10 o 
+5 servidores o los que necesitemos, vamos a procesar, con Spark tendremos que conectarnos a HDFS y leer 2 entidades y volcarlas a la 
+memoria RAM del clúster y también necesitamos 2 entidades de Amazon y las volcamos en la memoria RAM del clúster y una de Azure y la 
+volcamos en la memoria RAM del clúster y 3 de Google y las volcamos en la memoria RAM del cluster. En pocas palabras, hemos leído lo 
+que queremos procesar desde diferentes sistemas de archivos, hacemos lo que tenemos que hacer y la resultante la tenemos también una 
+variable en memoria RAM. El último paso es y ¿dónde queremos escribir el proceso? en Azure, entonces nos comunicamos con el sistema de 
+archivos de Azure y mandamos a escribirlo ahí. Vean entonces que Spark ya nos habilita también el procesamiento en multi-cloud, Spark 
+permite leer desde diferentes sistemas de archivos, no solo desde uno único. Van a ver que esto en código también se traduce en entender 
+el protocolo del sistema de archivo, que el código es simple, básicamente el nombre del sistema de archivo seguido de : y luego la ruta 
+sobre el sistema de archivos, pero ya tenemos una herramienta que nació también con esa filosofía, leemos desde diferentes nubes, 
+procesamos en el clúster de la nube que queramos, tenemos la resultante y la guardamos en la nube que queramos, podría ser la propia 
+nube de Azure o cualquiera otra de las nubes o dentro de nuestro repositorio local. Spark nos va a habilitar todo esto, justamente por 
+eso fue el reemplazo de mapReduce, porque, no nació con todo eso, nació antes de las tecnologías Google u otras cosas que ahora 
+clásicamente se estilan realizar. Por eso es que usamos Spark. 
+
+
+Elasticidad
+-----------
+
+Ahora ya entendemos otro concepto, el concepto de big data nos permitió a manera de un resumen muy grande ser escalables, ya hace un
+momento dimos un resumen de qué significa esto así que simplemente diré gracias al big data somos escalables y una forma de implementar 
+esto es con Spark. Ahora hemos agregado el otro concepto de la nube, ya sabemos cuáles son las ventajas de la nube, quizá el día de hoy 
+necesitemos solo 5 servidores y mañana 3 y mañana 2 y mañana 7, en función de cuánta data nos den. Entonces tenemos un clúster que puede 
+aumentar o disminuir el número de servidores, los usamos por el tiempo que tengamos que usarlos y luego destruimos esos servidores. A 
+este concepto se le conoce como ELASTICIDAD. La nube nos permite ser elásticos, es decir, permite aumentar o disminuir la potencia de 
+infraestructura en función de la necesidad de la volumetría, el código hoy necesita de 5 servidores, alquilemos esos 5 servidores o 
+quizás 10 y quizás mañana 20 y luego 2, entonces aumenta o disminuye, por eso es ELÁSTICO. Todo esto lo implementa Spark, así que POR 
+ESO DECIMOS QUE ES SPARK NOS PERMITE TENER CÓDIGO ESCALABLE Y CÓDIGO ELÁSTICO y es de esta manera en que Spark se ha convertido en la 
+herramienta de procesamiento para entornos de big data al día de hoy, por eso se utiliza mucho. Ahora eso no significa que Spark sea el 
+único motor Spark, es el motor de uso general, tienes un proyecto de big data sí o sí tiene que ir a Spark. De hecho todas las nubes la 
+traen, es la herramienta por defecto para programación sobre entornos de Big data, pero es de uso general, cualquier cosa que tú quieras 
+hacer de big data, ni lo pienses, Spark. Pero como todo en la vida hay proyectos particulares, por ejemplo, existe el motor de 
+Tensorflow que es un motor de distribución de carga de trabajo, pero orientado a procesos solo de Deep learning, ni siquiera procesos 
+analíticos en general, solo los de Deep learning. Así que podríamos complementar Spark también con otros motores, pero ya son motores 
+de nicho, de algo muy particular, por supuesto, estos motores ya estarían fuera del alcance de este curso, nosotros solamente nos vamos 
+a enfocar en la parte de procesamiento con Spark. Con todo esto ya entendemos los conceptos más básicos de todos.
