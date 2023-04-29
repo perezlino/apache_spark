@@ -1,0 +1,179 @@
+CLASE 2
+=======
+
+Hoy va a ser la primera sesión de laboratorio, vamos a construir el arquetipo más básico que existe el cual consiste en leer procesar 
+y almacenar. Deben de saber que cuando nosotros programemos vamos a partir siempre de un sistema de archivos distribuidos. La semana 
+pasada ya sobre un directorio hemos subido varios archivos que vamos a ir procesando, lo primero que hay que hacer es leer los archivos 
+que queramos procesar, generalmente las empresas sobre los sistemas de archivos construyen algo llamado un DATA LAKE. Aún no conocemos 
+estos términos, así que, vamos a decir que por el momento un DATA LAKE es un sistema de archivos distribuidos en donde la empresa 
+coloca las entidades dentro de directorios. Por ejemplo, digamos que estamos en un banco, ¿un banco que necesita para funcionar? podría 
+tener la entidad ‘cliente’ el cual sería un directorio sobre el sistema de archivos distribuidos y aquí tendríamos el archivo de sus 
+clientes y este archivo podría tener 10.000 o 100.000 clientes. ¿Qué otra entidad necesitaría un banco? el banco también necesita la 
+entidad ‘empresa’, digamos que también hay clientes empresariales, entonces, ahí está el archivo de empresas y tiene 10.000 empresas 
+como clientes. También tenemos una entidad ‘transacción’, entonces, hay un directorio transacción y dentro estarán los archivos de 
+transacciones. Por ejemplo, el día de hoy se hicieron 10.000 transacciones, al día siguiente quizá se hagan más transacciones y nos 
+dejarán otro archivo de datos y luego lo colocaremos dentro de un directorio, y en total tendríamos 20.000 transacciones y así 
+sucesivamente. Pues un banco probablemente tenga decenas de miles de entidades que necesita para funcionar, todo eso desde el punto de 
+vista de un sistema de archivos distribuidos son directorios para cada entidad y dentro de los archivos de datos que representan los 
+registros de la entidad. ¿Por qué los entornos de big data lo ven de esta manera? por ahora solamente vamos a hablar de procesamiento 
+estructurado, de hecho, es lo que lo único que vamos a hacer el día de hoy, el tipo de procesamiento más simple, pero también es 
+posible que las empresas tengan archivos semiestructurados como los archivos JSON o los archivos XML. Digamos que las transacciones 
+son entregadas, tenemos un servidor de visa externo a la empresa y él al cierre de día entrega todas las transacciones, pero, dentro de 
+un archivo JSON, ya que, va por un API REST o Web service o dentro de un archivo XML, ya que, va por un cliente empresarial soa, lo 
+importante es que al final es probable que nos den información en un archivo semiestructurado. Ese archivo semiestructurado seguirá el 
+mismo patrón de diseño, sobre el DATA LAKE tendremos un directorio llamado transacciones y dentro colocaremos el archivo JSON 
+semiestructurado. Las entidades son directorios y dentro podemos colocar 3 tipos de archivos: archivos estructurados, archivos 
+semiestructurados como lo son los JSON o los XML y archivos no estructurados, como, por ejemplo, podrían ser imágenes vídeos o audio. 
+Por eso es que siempre hay que manejarlo todo al nivel del sistema de archivos, es un directorio y dentro tenemos los archivos. Todavía 
+no vamos a dar tanto detalle de procesamiento semi estructurado y no estructurado, así que por el momento vamos a hablar de 
+procesamiento estructurado. Vamos a tener los archivos clásicos que tendrán algún tipo de separador, por ejemplo, vamos a tener un 
+archivo que tiene 1.000 registros, esos 1.000 registros tienen el campo identificador, nombre del cliente, su edad, su salario y todo 
+lo que necesitemos. Cada registro para dividir los campos pues los separamos por comas, entonces, este es el tipo de archivo más simple 
+que te podrían entregar. Sin embargo, este no es el único tipo de archivo estructurado, clásicamente a esto se le conoce como un CSV, 
+un archivo que está delimitado por comas. Pero existen otros archivos estructurados, los archivos CSV son los más lentos en el 
+procesamiento. Existen mejores formatos de procesamiento que son estructurados, pero binarizados, por ejemplo, los formatos PARQUET u 
+ORC. De hecho, existen binarios para formatos semiestructurados como los AVRO. Tampoco vamos a ver el día de hoy el procesamiento desde 
+archivos binarizados, realmente en un proceso ya real que va a ser productivo, tomaríamos el archivo en texto plano y lo binarizaríamos 
+a un archivo de rápido procesamiento. ¿Estos binarios que tan rápidos son respecto a un texto plano? depende del contexto, en el peor 
+de los casos el proceso se hará 10 veces más rápido y en el mejor de los casos se hará hasta 100 veces más rápido. Vean entonces, que 
+incluso aunque el proceso vaya extremadamente lento, en comparación con procesar texto plano pues irá muy rápido. En esencia cuando a 
+ustedes les entreguen información van a tener que hacer algo como esto, de hecho, lo haremos la siguiente semana, porque, son 2 pasos. 
+El día de hoy nos vamos a enfocar solo en el primer paso. Nos dejan un archivo estructurado que está separado por comas, tenemos 1.000 
+registros con 3 campos, podríamos procesarlo directamente pero llamaremos a un proceso de binarización, el cual, tomará el archivo y lo 
+convertirá a un formato binario de rápido procesamiento, existen varios,  algunos como PARQUET o ORC. Ahora la pregunta es: 
+
+
+¿Y cuál binario me conviene? 
+----------------------------
+
+-	PARQUET, por ejemplo, es el más rápido, pero no soporta formatos del tipo fecha.
+-	ORC es el segundo más rápido y él sí soporta formatos de tipo fecha. 
+
+Estos 2 binarios estan orientados a procesamiento estructurado. 
+
+-	Mientras que AVRO está orientado a procesamiento semiestructurado, de hecho, también es el más lento de los 3. 
+
+Entonces, dependiendo de la necesidad de procesamiento ya lo binarizaremos a un formato adecuado. Pero partamos el día de hoy de lo más 
+simple hablemos solamente del archivo de texto plano y por un momento omitamos todos estos detalles que ya son un poco más complejos. 
+
+
+¿En qué vamos a procesar? 
+-------------------------
+
+Ya sabemos que en el sistema de archivos distribuidos tendremos algún directorio y algún archivo que queremos procesar que podría estar 
+en texto plano o podría estar binarizado. Independientemente de eso, el primer paso siempre va a ser el mismo, vamos a construir una 
+cajita que apunte al archivo que queremos leer, dentro de esa cajita de lectura configuraremos el formato de lectura. Una vez que la 
+cajita de lectura se ejecute sobre la memoria RAM del cluster se creará una variable, la variable que contendrá todos los registros del
+archivo, si el archivo tiene 1.000.000 de registros sobre la memoria RAM tendremos ese 1.000.000 de registros, si el archivo es 
+estructurado en la memoria RAM esos registros también son estructurados. 
+
+
+¿Cómo viven los objetos en memoria RAM?
+--------------------------------------- 
+
+Cómo estamos usando un lenguaje de programación, pues los objetos en la memoria RAM viven dentro de variables, solo que a estas 
+variables que provengan de un archivo de un sistema de archivos distribuidos, reciben un nombre especial, a esas variables que provengan 
+de un archivo de un sistema de archivos distribuidos se les llama DATAFRAME. Entonces la información ya no vive en disco duro, ahora le 
+hemos copiado y pegado en una variable en memoria RAM, en un DATAFRAME. Un DATAFRAME implica que la información ya está cargada en la 
+red. Una vez que hemos cargado la información en una variable ‘df’ en un DATAFRAME, en la memoria RAM ya nos da igual si el archivo era 
+un texto plano o si en disco duro estaba en PARQUET o si en disco duro estaba en ORC o AVRO, ya que, sobre memoria RAM es simplemente 
+información en la RAM. El propio Spark ya tiene su gestor de memoria RAM, de eso hablaremos en próximas sesiones cuando hagamos 
+optimizaciones y por ejemplo aquí hay que entender bien el concepto de GARBAGE COLLECTOR, pero, todavía sería muy pronto para ver 
+optimizaciones más avanzadas. Así que por el momento decimos: a Spark le da igual el formato del archivo en disco duro, una vez que 
+está cargado en la memoria RAM en un DATAFRAME ya es un formato único que gestiona el propio Spark. Ese es el primer paso del 
+procesamiento, leer lo que queremos procesar. Una vez que hemos leído lo que queremos procesar ahora hay que procesar. El procesamiento, 
+todavía no estamos hablando de tunning, pero sí hay que entender estos conceptos, realmente quién procesa no es la memoria RAM, en la 
+memoria RAM simplemente volcamos la información que queremos procesar, digamos que en el DATA LAKE de la empresa, la empresa tiene 
+200.000 entidades que necesita para funcionar, pero el proceso que tú estás construyendo pues solamente necesitas procesar 3 de esas 
+entidades, entonces tendríamos que construir 3 cajitas de lecturas, ahí tendríamos la entidad uno en el DATAFRAME 1, la entidad dos en 
+el DATAFRAME 2 y la entidad 3 en el DATAFRAME 3 y ya estaríamos usando toda esta parte de la memoria RAM del cluster. 
+ ___________________________________________________________________________________________________________________________________
+|                                                                                                                                   |    
+|   Lo primero es volcarlo a la memoria RAM. una vez que la información se encuentre en la memoria RAM, ahora sí procesémos. El     |
+|   procesamiento no depende de la memoria RAM, la memoria RAM lo único que hace es dar soporte de espacio de almacenamiento a lo   | 
+|   que se va a procesar, pero la memoria RAM no procesa.                                                                           |
+|___________________________________________________________________________________________________________________________________|
+ ___________________________________________________________________________________________________________________________________
+|                                                                                                                                   |
+|   Supongamos que para hacer esta lectura aún tampoco sabemos hacer reservas de memoria RAM, pero supongamos que hemos reservado   | 
+|   100 GB de RAM y ahí entró todo y tú dices: “ … quiero que el proceso vaya más rápido, a ver voy a cambiar la variable de        |
+|   configuración de reserva y ahora le voy a poner 200 GB de RAM para que vaya el doble de rápido … “ simplemente tendrías más     |
+|   espacio para cargar archivos, pero eso no aumentaría la velocidad del procesamiento.                                            |
+|___________________________________________________________________________________________________________________________________|
+
+
+¿Y en función de qué recurso está la velocidad del proceso?
+-----------------------------------------------------------
+
+En función de las vCPUs. Aún no conocemos tampoco el término exacto, de todo esto también lo definiremos exactamente cuándo hablemos 
+de tunning, así que por ahora la llamaremos simplemente la CPU que tenga el clúster y este tiene 100 CPUs para nuestra disposición. 
+Vamos a implementar el proceso, esta cajita de procesamiento que tomará los DATAFRAMEs hará algo y creará un DATAFRAME resultante 
+también en memoria RAM, ¿dónde va a funcionar? va a apuntar a las CPU que tenga el cluster. Vamos a asignarle algunas CPU, digamos que 
+del clúster le asignamos solamente 5 CPUs para probar qué tal va, le damos al botón ejecutar y con 5 CPUs el proceso se toma 3 horas, 
+entonces, mandamos a ejecutar esto, lo codificamos en Scala, leemos los DATAFRAMEs, el proceso se ejecuta sobre esas 5 CPUs y la 
+resultante de ese procesamiento por supuesto se guardan nuevamente en la memoria RAM y ahí tenemos la resultante, un reporte para 
+negocio, ahí tenemos el reporte que negocio me pidió, va en una variable más. Entonces, viene negocio y te dice: “ … sí es correcto, 
+este es el reporte que yo quería procesar y el output es correcto, sin embargo, el proceso está muy lento, el output es correcto, pero, 
+que se demore 3 horas no, está demasiado lento, a lo más yo puedo esperar a que el proceso esté en 1 hora … “. Como estamos en un gestor 
+de big data, como vimos en la clase teórica en la semana pasada, se cumple la escalabilidad, lo quieres 3 veces más rápido, de acuerdo, 
+vamos a cambiar la línea de código que reserva las CPUs, si lo quieres 3 veces más rápido tendremos que reservar el triple de CPUs, 
+3 por 5 sería 15, entonces, en alguna línea de código, como aprenderemos en sesiones posteriores, haríamos esto, nos reservamos las 
+15 CPUs, mandamos a ejecutar nuevamente el proceso y ahora sí tenemos el tiempo de procesamiento que negocio espera. Vean que las CPUs 
+es quien nos permitirán implementar ese concepto de escalabilidad. Entonces, vean que cuáles son los pasos: 
+
+1.- Leer sobre memoria RAM todo lo que quieras procesar. Los archivos pueden estar en diferentes formatos, quizás el DATAFRAME 1 
+    provino de un texto plano, quizás el DATAFRAME 2 provino de un binario PARQUET, quizás el DATAFRAME 3 provino de un binario AVRO. 
+    A Spark eso le da exactamente igual, una vez que coloca la información dentro de DATAFRAMEs en memoria RAM, ya todos tienen el 
+    mismo tipo de binario que Spark gestiona. 
+
+2.- Una vez que hemos leído los datos, ahora sí implementemos lo que negocio me ha pedido y el día de hoy vamos a aprender a hacer un 
+    tipo de procesamiento muy simple para archivos estructurados. Aquí hacemos lo que negocio nos pide, un reporte. 
+
+3.- Ese proceso va a dejar como último paso una resultante y la resultante también se guarda en un DATAFRAME. 
+
+4.- Todo lo que vive en memoria RAM es volátil, es decir, si yo cierro mi sesión de Spark, voy a borrar todos los DATAFRAMEs, así que 
+    el último paso es como cuarto paso, en algún directorio del sistema de archivos distribuidos, guardar la información del DATAFRAME 
+    dentro de un archivo, es decir, guardarla en el sistema de archivos y aquí tenemos la resultante que negocio nos pidió y negocio ya 
+    se puede llevar el archivo para hacer lo que tengan que hacer. La resultante cuando la almacenemos puede ser en texto plano o 
+    binarizado y ahí también hay reglas para decidir si se deja en texto plano o en forma binarizado, de esto hablaremos la próxima 
+    semana a detalle, por ahora vamos a procesar todo en texto plano. Luego acá tenemos el proceso funcionando pero no necesariamente a 
+    la velocidad que quería negocio. 
+
+5.- El quinto paso es el TUNNING de recursos computacionales. Por ejemplo, vamos a ver con cuántos recursos hemos ejecutado el proceso: 
+    “ … ah con 5 CPUs y se tomó 3 horas … “ negocio quiere que el proceso vaya más rápido, de acuerdo, aquí tengo todo lo que he 
+    codificado, vamos a la cabecera del tuning y en lugar de que diga 5 CPUs, ahora va a decir 15 CPUs, cambiamos esa línea, ejecutamos 
+    el proceso para ver que la velocidad sea la esperada y listo, vean que no se tuvo que cambiar ninguna línea de código, simplemente 
+    asignamos más potencia de procesamiento. De hecho, este quinto punto que es el tunning también debería ser elástico, esto ya 
+    dependería de algún servicio en nube en particular, en Azure se hace de una manera, en AWS se hace de otra manera, en GCP se hace 
+    de otra manera. Adicionalmente, los procesos no son tan simples, estos 4 primeros pasos son los que conforman el arquetipo estándar, 
+    un arquetipo es una forma estándar de programar, primero leer luego procesar, después escribe resultante en memoria RAM y finalmente 
+    bajar esa resultante a disco duro, simplemente te dice cómo hacerlo. Pero no es todavía un arquetipo realista, porque, pueden pasar 
+    1.000 cosas, una de ellas es, por ejemplo, hay que saber cómo reservar las CPUs de la memoria RAM, otra de ella es pues no solamente 
+    se van a procesar datos estructurados a la vez es posible que la información esté en data estructurada y data semiestructurada, nos 
+    piden procesar a la vez: “ … oye acá tenemos una parte en la información en un archivo CSV y otra parte de la información en un 
+    archivo XML y otra parte de la información en un archivo JSON … “ entonces hay que saber cómo va a ser el procesamiento estructurado 
+    y semiestructurado a la vez. También hay problemas de gestión de memoria, por ejemplo, y ¿qué pasa si en el proceso de lectura no 
+    tienes la suficiente memoria RAM para cargar todo lo que quieras procesar? ahí tendríamos un anti patrón de diseño que es lo que se 
+    conoce como la MEMORIA VIRTUAL, desde disco duro se emula memoria virtual y desde ahí se va a procesar, el problema es que el disco 
+    duro es 100 veces más lento que la memoria RAM y tu proceso va a ir 100 veces más lento y ya no es escalable. Entonces realmente 
+    hay más detalles técnicos, eso por ejemplo se arregla con el patrón de diseño CHECKPOINT. Entonces lo que veremos el día de hoy 
+    solamente es lo más estándar para entender cómo se programa. Luego de eso van a resolver un ejercicio, si logras resolver ese 
+    ejercicio ya tendrás las bases para programar sobre Spark y Scala y ya sobre eso la próxima semana empezaremos a construir un 
+    arquetipo más completo. Lo siguiente, por ejemplo, es el arquetipo que incluye capas de procesamiento, porque no todo es tan simple 
+    como una cajita que procesa, esto hay que dividirlo en capas de arquetipos. 
+
+Por lo tanto, el objetivo del día de hoy va a ser el siguiente: desde el sistema de archivos distribuidos en un directorio vamos a leer 
+archivos, vamos a cargarlo sobre DATAFRAMEs todo lo que queramos procesar, vamos a construir un proceso que procese sus DATAFRAMEs y 
+esto lo vamos a hacer con lógica de procesamiento estructurado. Existen 2 formas de programar de manera estructurada: 
+
+1.- Con lógica funcional 
+2.- Spark SQL 
+
+De aquí en adelante vamos a programar siempre con lógica funcional, ya que, es la que nos permite implementar los patrones de diseños 
+más avanzados, sin embargo, para llegar a la lógica funcional primero debemos de partir con lógica estructurada clásica. Solo el día de 
+hoy nos vamos a enfocar en el módulo de Spark SQL para entender las bases de cómo se programa en Scala y el arquetipo estándar. Pero 
+recuerden que esto son solo las bases, la lógica funcional es la que realmente nos va a servir de aquí en adelante, pero para llegar a 
+este punto pues primero debemos de pasar por aquí. Entonces en la cajita de procesamiento implementaremos una lógica muy simple de 
+procesamiento estructurado basado en el estándar de SQL, eso hará que tengamos una resultante, ahí la guardaremos y será un DATAFRAME 
+resultante que finalmente bajaremos en un archivo de texto plano en el sistema de archivos distribuidos y con eso tenemos el arquetipo 
+estándar de procesamiento para Spark y Scala. 
