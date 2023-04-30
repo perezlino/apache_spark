@@ -1,6 +1,6 @@
 // Databricks notebook source
-//COPYRIGHT: BIG DATA ACADEMY [info@bigdataacademy.org]
-//AUTHOR: ALONSO MELGAREJO [alonsoraulmgs@gmail.com]
+//COPYRIGHT: ALFONSO PEREZ [perezlino@gmail.com]
+//AUTHOR: ALFONSO PEREZ [perezlino@gmail.com]
 
 // DBTITLE 1,1. Leyendo un archivo dentro de una variable en memoria RAM
 //Leemos un ARCHIVO desde DISCO DURO y lo colocamos en una DATAFRAME en memoria RAM

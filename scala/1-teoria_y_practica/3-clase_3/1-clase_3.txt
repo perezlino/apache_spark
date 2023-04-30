@@ -1,0 +1,285 @@
+CLASE 3
+=======
+
+El día de hoy vamos a trabajar los laboratorios 7, 8, 9 y 10 vamos a aprender lo que implica la programación funcional. 
+Primero, en el laboratorio 7 aprenderemos cómo leer estos datos y empezar a procesarlos, pero ahora usando el juego de 
+funciones estándar que trae Spark. Existen 2 tipos de funciones en Spark: 
+
+-	Transformations
+-	Actions 
+
+Los “transformation” definen pasos de procesamiento, pero no procesan, por otro lado, los “actions” llaman a ejecutar el 
+proceso que tú hayas definido. Vamos a entender esto mucho mejor mientras vayamos codificando. Luego de haber entendido 
+ese concepto, vamos a aprender lo que implica el encadenamiento de procesos, estos transformation nos van a ayudar a 
+implementar lógicas funcionales, es decir, utilizar funciones utilitarias que nos permiten implementar pasos de procesamiento, 
+el paso uno es quizá filtrarse con cierta condición, el segundo paso que negocio necesita es agrupar un reporte según un 
+campo y pues habrán 20, 30 o 40 pasos, lo que negocio necesite para su solución. Al momento de implementar esos pasos hay 
+2 tipos de forma de codificación: 
+
+-	La primera es por pasos separados, es decir, acá tenemos el paso uno que negocio nos ha pedido, el segundo paso, tercero 
+    o cuarto y así todo lo que negocio nos pida. A esto se le llama crear una cadena de procesos en pasos separados, porque, 
+    literalmente los pasos están separados. 
+
+-	Pero hay otro estilo de programación el cual es crear un proceso en una única cadena de procesos en donde todos los pasos 
+    que negocio necesiten, pues, también hay una forma de codificarlo directamente en un único gran paso. 
+
+Hay que entender que implica ambas formas de codificación sobre la memoria RAM. Después de eso una vez que hayamos hecho el 
+procesamiento de los datos y tengamos la resultante final que negocio nos haya pedido, el último paso es guardar esa resultante 
+final en el sistema de archivos distribuido, para que negocio se pueda llevar ese archivo de datos. Por ejemplo, aquí hay un 
+pequeño procesamiento y la variable que tiene la resultante debe ser escrita sobre el sistema de archivos distribuidos en algo 
+directorio y dentro de ese directorio se encontrará el archivo con el reporte que negocio nos haya pedido. Al momento de hacer 
+una escritura existen 2 formatos de escritura: 
+
+-	Los formatos de texto plano que son los tipos de archivos que hemos estado viendo hasta el momento, por ejemplo, el archivo 
+    “persona.data”, lo podemos abrir con un editor de texto y vemos su contenido, tenía ciertos campos y registros, era legible, 
+    por eso es de texto plano. 
+
+-	Pero también existen otros archivos en formatos binarios, por ejemplo, el formato de almacenamiento en PARQUET o el formato 
+    de almacenamiento en AVRO, en ambos vamos a guardar la misma información, digamos que el reporte resultante lo podemos guardar 
+    en un archivo de texto plano clásico. 
+
+Sin embargo, en el mundo del desarrollo en entornos de big data no solamente existe Spark como herramienta, Spark es solo una de 
+muchas herramientas que existe, hay otras por ejemplo como Hive. A diferencia de Spark, Spark sólo procesa en la memoria RAM, 
+hay otras herramientas como Hive que parte del procesamiento lo hacen también en disco duro. ¿Cuál es el problema? si procesamos 
+un archivo de texto plano y digamos que ese procesamiento toma 100 minutos desde disco duro, si hubiésemos binarizado el archivo 
+en un formato binario y la herramienta que procesa en disco duro hubiese procesado ese archivo binario en lugar de hacerlo en 
+100 minutos el mismo proceso hubiese tardado tan solo 10 minutos, es decir, lo hubiese hecho 10 veces más rápido. Por eso es que 
+cuando guardemos un archivo, un dataframe resultante hay que considerar, nos conviene guardar esa resultante en texto plano o
+nos conviene guardar esa resultante en un formato binario. No todo va a ser formatos binarios, por ejemplo, si el archivo final 
+de negocio se lo va a llevar a alguien de negocio que no sabe nada de temas de big data, digamos que es un usuario que lo quiere 
+cargar a su Excel para hacer algo con el reporte que le hemos calculado, entonces él no conoce nada de formatos binarios, a él 
+le conviene un texto plano. Por otro lado, sí el archivo resultante de nuestro proceso se lo va a llevar alguien técnico que sí 
+conoce de big data y probablemente lo va a seguir procesando con herramientas como Hive, que procesan desde disco duro, 
+entregárselo en texto plano haría que su proceso vaya muy lento, por lo tanto, habría que entregar un formato binario. Existen 2: 
+
+-	PARQUET
+-	AVRO 
+
+De hecho, existen más, pero, estos son los esenciales. Por ejemplo, el formato PARQUET está orientado a guardar DATAFRAMES 
+estructurados y el formato AVRO está orientado a almacenar DATAFRAMES semiestructurados. Los dataframes semiestructurados los 
+trabajaremos la próxima semana, pero esto ya nos dará un punto de inicio para entender qué trata esto de los procesos 
+semiestructurados. Una vez que entendamos todos estos conceptos y veamos los patrones de diseño a nivel de código, vendrá el 
+ejercicio con el cual van a practicar de aquí hasta la siguiente semana. Se les va a pedir implementar un arquetipo de 
+procesamiento, esto es un arquetipo de procesamiento básico, aún no es del todo realista, porque en un escenario real hay todavía 
+más cosas que la siguiente semana vamos a aprender, pero les dará el impulso inicial para entender un arquetipo inicial, que es lo 
+más básico de lo básico. Por ejemplo: 
+
+1.- Primero hay que leer en DATAFRAMES los archivos de datos que queremos procesar, eso ya deberíamos entenderlo. Luego de eso 
+    pues generalmente los archivos que negocio nos da en ocasiones puede que tengan registros sucios, es decir, registros que no 
+    cumplan las reglas de calidad que el equipo de calidad de la empresa defina, por ejemplo, si estamos hablando del archivo de 
+    personas que tiene un campo de edad, la regla de calidad que el equipo de calidad define es que las edades deben de ser mayores 
+    a 0, entonces, no puede haber una edad de cero, no puede haber una edad -7 o -25, no pueden haber edades negativas. 
+
+2.- Puede ser que entre los millones y millones de registros, que de hecho va a pasar, pues la data este sucia, por lo tanto, hay 
+    que implementar un proceso de calidad que limpie el archivo de datos en función de las reglas de calidad que se hayan definido. 
+    Ese es el segundo paso del arquetipo, el proceso de reglas de calidad. 
+
+3.- Una vez que tengamos los DATAFRAMES limpios, lo siguiente es procesarlo, se va a pedir que construyan 3 reportes, para hacer 
+    estos reportes vamos a tener que cruzar los datos, se acuerdan que en la semana pasada hicimos un proceso JOIN de cruce de 
+    datos para encontrar los datos de la persona que hizo la transacción, aquí vamos a hacer algo parecido. Para cada transacción 
+    realizada cruzaremos esto con el dataframe en persona para encontrar los datos de la persona que hizo la transacción, entonces 
+    en este dataframe tendríamos los datos de la transacción y los datos de la persona que hizo la transacción. Luego este 
+    dataframe lo volveremos a cruzar con el dataframe empresa para obtener los datos de la empresa en donde se realizó la 
+    transacción, entonces la persona de ID = 1, que se llama Alonso, que tiene 32 años, hizo una transacción en la empresa = 7 que 
+    es Amazon, ya tendríamos detalles de dónde se realizó la transacción y quién la realizó. Después de esto van a ser un proceso 
+    de pre filtrado, esto lo vamos a ver en el código para entenderlo mucho mejor, de hecho, esto es un punto de optimización que 
+    hablaremos dentro de 2 semanas, cuando veamos patrones de diseños más avanzados, acá habrá un pequeño proceso de filtrado y en 
+    función de este dataframe resultante, crearemos 3 reportes, esto ya lo vamos a aclarar en unos momentos cuando conozcamos algo 
+    de código. Una vez que tenemos esos reportes, hacemos el almacenamiento en archivos y esto es lo que ya negocio se llevaría. 
+
+SE LE LLAMA UN ARQUETIPO PORQUE MUESTRA LOS PASOS DE PROCESAMIENTO, primero leer, luego limpiar, luego cruzar los datos, estos 
+cruces de datos tienen un nombre técnico conocido como “tablones”, por ahora, las resultantes de cruces se van a llamar “tablones”. 
+La próxima semana que veamos el arquetipo completo esto se va a aclarar un poco más. Una vez que tenemos pre-procesada la 
+información en tablones, ahora sí viene el procesamiento propiamente dicho, el cual puede ser desde un pequeño reporte, como haremos 
+el día de hoy, hasta algo más complejo como una red neuronal. Aquí es donde viene la parte de ya procesarlo, lo que negocio en si 
+quiere. Finalmente una vez que se tienen las resultantes viene la parte de almacenamiento y con esto ya tendríamos el arquetipo más 
+básico. 
+
+Vamos a seguir hablando también lo que implica el código a nivel de memoria RAM, ya que, hoy no vamos a hablar de temas de 
+optimización, simplemente que el código funcione. Desde la próxima semana ya vamos a ir hablando de algunos pequeños temas de 
+optimización y ya desde la subsiguiente ahí veremos las optimizaciones más avanzadas a nivel de código, pero el día de hoy hay que 
+ir entendiendo cómo es que todas las sentencias que ejecutemos van a afectar a la memoria RAM. En el mundo de Spark hay 2 tipos de 
+funciones: 
+
+-	Las funciones estánda
+-	Las funciones personalizadas conocidas como UDF, en español significa funciones definidas por el usuario o user definition 
+    functions. 
+-	
+Hoy vamos a aprender solo el juego de funciones estándar que trae Spark, ahí, por ejemplo, está el filter, el select, el groupBy, 
+el join y algunas otras que veremos el día de hoy. El problema que les he mostrado solamente lo resolveremos con el juego de 
+funciones estándar. Sin embargo, en un escenario real en una empresa las funciones estándar son buenas, porque, ya tienen 
+implementado lo más básico de lo básico, pero lo más probable es que dependiendo del negocio vas a tener que crear funciones 
+personalizadas, para eso se usan las funciones de tipo UDF. Esto lo vamos a trabajar la siguiente semana, por ahora solamente 
+enfoquémonos en el juego de funciones estándar. Lo otro es que cuando hablamos de DATAFRAMES hay 2 tipos de DATAFRAMES: 
+
+-	Los DATAFRAMES estructurados 
+-	Los DATAFRAMES semiestructurados 
+-	
+Por ahora, seguiremos solamente con los dataframes estructurados, esos que cuando los imprimimos aparentemente tienen la estructura 
+de una tabla. Pero al igual que el caso de los UDF en un escenario real cuando tú estés procesando datos a la vez vas a tener que 
+procesar información estructurada y semiestructurada en un mismo proceso, no es que uno vaya por un flujo y el otro vaya por otro 
+flujo. Generalmente la necesidad de negocio hace que tenga que procesar ambos tipos de DATAFRAMES a la vez. Para ir partiendo de 
+poco e ir conociendo que es la programación funcional, también vamos a omitir al menos por el momento los dataframes 
+semiestructurados. Así que el día de hoy vamos a aprender programación funcional sobre Spark con el juego de funciones estándar para 
+dataframe estructurados. 
+
+
+Programación funcional
+----------------------
+
+Se le llama programación funcional porque hacemos uso de funciones para procesar los DATAFRAMES, solo haremos uso el día de hoy de 
+funciones estándar. Ya la siguiente semana empezaremos a crear funciones personalizadas. 
+
+
+Transformations & Actions
+-------------------------
+
+¿Cuál es la diferencia? Veamoslo a nivel de memoria RAM. En estos momentos en la memoria RAM del cluster, solamente 
+tenemos al dataframe 'dfPersona'. Lo habiamos leido desde un archivo y listo, estamos ocupando algo de memoria RAM. ahora
+hemos definido un paso de procesamiento que se va a ejecutar sobre la CPU, en este caso este paso de procesamiento es
+algo muy simple, vamos a seleccionar algunas columnas. Un TRANSFORMATION solamente define solamente como se va a crear un
+DATAFRAME, pero no lo crea en la memoria RAM, solamente hemos definido el paso de como el dataframe 'df1' se va a crear, 
+los transformations no ejecutan procesos, no los accionan, solo definen como se transforma un dataframe en otro dataframe,
+por eso se les llama TRANSFORMATIONS. La función 'SELECT' es un transformation. Eso quiere decir que, digamos, vamos a crear
+el 'df1' y seleccionamos ciertos campos especificos y le doy CTRL + ENTER, aún no existe 'df1' en la memoria RAM. Para crear
+un dataframe tenemos que llamar a un ACTION, como la función 'SHOW()' y es en este momento que se comienza a utilizar 
+memoria RAM, donde la variable utiliza espacio en memoria RAM.
+
+
+Falta de memoria RAM (Spark Memory Overhead)
+--------------------------------------------
+
+Cada vez que nosotros creemos dataframes estamos ocupando cada vez más memoria RAM y recordar que la memoria RAM en el 
+cluster es limitada, eso quiere decir que en algún momento se va a acabar. 
+
+
+¿Qué va a pasar cuando se acabe la memoria RAM?
+----------------------------------------------- 
+
+Pues simplemente ya no vas a poder crear dataframes y nos va a salir un error que es uno de los que más obtienen al 
+programar en Spark conocido como el MEMORY OVERHEAD, que en español podríamos traducirlo como “Desbordamiento de memoria 
+RAM” o en términos más simples pues se te acabó la RAM porque creaste muchos dataframes y ya no hay más espacio. ¿Esto que 
+implica a nivel de desarrollo? hablemos nuevamente en un escenario de la vida real, recuerda que en una empresa, aquí está 
+el cluster de desarrollo, se tiene un 100% de la potencia del cluster, hablemos solo de la RAM, digamos que tiene 1.000 GB 
+de memoria RAM, pero recuerda que tú no eres el único desarrollador que va a estar trabajando en el cluster, va a haber todo 
+un equipo de desarrollo por lo tanto tú no podrás tener ese 100% para ti solo, lo más probable es que tengas que reservar 
+cierta potencia del cluster, no tenemos el 100% de la potencia del cluster, tendrás un área de trabajo en donde sólo tú 
+trabajarás para no interrumpir el resto que está trabajando. Lo segundo, cuando empiezas a trabajar vas a ir creando 
+dataframes para implementar el proceso que negocio te haya pedido, mientras más pasos tenga tu proceso, más dataframes vas 
+a necesitar y por lo tanto más memoria RAM vas a requerir. Tal vez si negocio te ha pedido procesar muchos pasos llegue un 
+punto en que tu zona de memoria RAM se va a llenar y por lo tanto tendrás el error de “Memory Overhead” (desbordamiento de 
+memoria RAM) o simplemente pues se te acabó tu área de trabajo. 
+
+
+¿Qué se hace en este caso, como lo resolvemos?
+---------------------------------------------- 
+
+Primero hablemos de las soluciones técnicas, qué resolverían esto,  la primera es simple, cómo se me acabó área de trabajo 
+vamos a aumentarla, ahora voy a reservar el 20% de la potencia del clúster y sigo trabajando, técnicamente se puede hacer, 
+van a ver que a nivel de código es que en la sesión de Spark debemos mover unos parámetros y listo, tenemos más espacio de 
+trabajo, pero esa es la solución técnica, hablemos nuevamente de escenarios reales, ¿qué va a pasar en la empresa? recuerda 
+que en el clúster no sólo estás trabajando tú, hay otros desarrolladores, lo más probable es que todos estén con su propia 
+área de trabajo y tú no puedes simplemente aumentar tu área de trabajo porque implicaría que le estás robando recursos a 
+otros desarrollador y él no podría trabajar, entonces a pesar de que técnicamente es tan simple como cambiar unos parámetros 
+y tenemos más área de trabajo, en la vida real tal vez no sea posible que hagas eso, porque, el arquitecto de infraestructura 
+no te va a dejar que hagas eso porque le quitarías área de trabajo al resto. ¿Cuál es la otra alternativa? SI ESTAMOS EN LA 
+NUBE PODEMOS CREAR UN CLÚSTER ELÁSTICO. Por ejemplo, digamos que tenemos 10 servidores, vamos a aumentar el clúster a 20 
+servidores para tener 2.000 GB de RAM y de esa manera todos ahora tenemos un área de trabajo mucho mayor y yo puedo seguir 
+trabajando. Técnicamente es mover unos parámetros en la consola nube en AZURE o en AWS, en donde estemos trabajando, 
+entonces, se puede hacer, pero nuevamente hablemos de escenarios reales en las empresas, eso implica presupuesto y lo más 
+probable es que el encargado del presupuesto te diga: “ … oye esto está duplicando el presupuesto, de 10 servidores a 20 
+servidores, no hay dinero, simplemente no hay dinero para aumentar la potencia del clúster … “. Entonces, eso también puede 
+pasar. 
+
+Si no puedes quitar área de trabajo a otra persona y no puedes aumentar la potencia del clúster, ¿qué es lo que debes de 
+hacer?, ¿cómo puedes seguir trabajando si ya se te acabó la memoria RAM? esto es un problema estándar, no sólo te va a pasar 
+a ti, por ejemplo, esto se soluciona con el patrón de diseño CHECKPOINT. 
+
+
+¿Qué es un patrón de diseño?
+----------------------------
+
+Un patrón de diseño es una solución estándar ante un problema estándar, esto le pasa a todos los desarrolladores es de lo más 
+normal del mundo, entonces, ya se ha inventado una solución que es estándar de industria que te dice frente a este problema 
+hay esta solución, esto por ejemplo se soluciona con el patrón de diseño CHECKPOINT. ¿Qué es esto del patrón de diseño 
+Checkpoint?  Hablaremos también en su momento, como les dije el día de hoy, lo único importante es entender las implicancias 
+que hay en la memoria RAM al ejecutar el código. Por lo tanto, ¿qué es un patrón de diseño? un patrón de diseño es una 
+solución estándar ante los problemas estándar, Checkpoint es uno de ellos y hay muchísimos otros, esto también lo aprendemos 
+en su momento. 
+
+
+Garbage Collect
+---------------
+
+Ya hemos ido creando algunos dataframes y sobre nuestra sesión de Spark ya habremos ocupado algo de memoria RAM y tal vez 
+tengamos todavía algo de espacio libre donde podríamos crear más dataframes. Pero ahora hay que entender otro concepto el 
+GARBAGE COLLECTOR. Todos los códigos que nosotros construyamos con Spark y Scala se van a ejecutar en la máquina virtual de 
+Java, Scala es un fork de Java, es decir, simplifica la sintaxis de Java para que los desarrolladores se enfoquen más en hacer 
+el desarrollo de las necesidades que tenga negocio y no es tan complejo como Java que es un poco más robusto y está orientado 
+para crear frameworks empresariales, entonces, Scala es un fork de Java, es una simplificación de la sintaxis de Java. Pero 
+cuando mandamos a ejecutar el código de Scala se ejecuta sobre Java y ¿Java donde ejecuta todo? en la Java Virtual Machine, que 
+se le coloca como JVM. ¿Cómo funciona esto de la Java Virtual Machine? para nosotros va a ser muy simple, la Java Virtual 
+Machine recibe nuestro código y es quien ejecute el código. La máquina virtual de Java, la Java Virtual Machine tiene muchos 
+módulos, pero de todos ellos hay uno llamado GARBAGE COLLECTOR este es el que nos va a interesar. Desde un punto de vista 
+técnico hay muchas cosas técnicas que deberíamos de saber del GARBAGE COLLECTOR, pero vamos a simplificarlo para lo que nos 
+interesa que son procesos orientados a big data. ¿Qué es esto del GARBAGE COLLECTOR? en español el recolector de basura, lo que 
+hace el GARBAGE COLLECTOR es liberar zonas de memoria RAM que ya fueron creadas por alguna acción (algún Action). Recordemos 
+que en Spark lo que se va a acabar es la memoria RAM, ese es el recurso más preciado en Spark, mientras más dataframes 
+necesites para desarrollar, pues se va a llenar la memoria RAM, por no tanto, el GARBAGE COLLECTOR ¿qué es lo que hace? si ya 
+hay un dataframe que fue llamado por un Action, por ejemplo, el “show”, ya tenemos la resultante y lo capturamos en pantalla y 
+lo llevamos a una PPT y listo, entonces, ya no necesitamos al dataframe. EL GARBAGE COLLECTOR LO QUE HACE ES QUE CUALQUIER 
+DATAFRAME QUE YA HAYA SIDO CREADO POR UN ACTION, LO BORRA Y BIEN LO DETECTA, LO BORRA. 
+
+
+¿Pero como funciona?
+-------------------- 
+
+Lo hace de la siguiente manera, digamos que aquí tienes el dataframe “dfPersona” que leíste desde un archivo de disco duro, acá 
+tienes el Transformation “filter” en donde aún no le das CTRL + Enter al “show”, simplemente definiste el ‘filter’ para filtrar 
+por el campo ‘edad’ y se crea el dataframe pero aún no existe. Solamente lo hemos definido, aún no hemos llamado a la acción 
+que lo crea. Supongamos también que este dataframe ‘persona’ tiene 100.000.000 de registros, ahora mandamos a ejecutar al ‘df1’ 
+dándole un “.show” y ahora sí se va a crear en la memoria RAM, ¿cuánto tiempo le va a tomar al proceso filtrar 100.000.000 de 
+registros? Digamos que este proceso es muy largo y toma 1 hora en que el dataframe ‘df1’ se cree en la memoria RAM, esperamos 
+1 hora y listo ya tenemos el ‘df1’ en la memoria RAM. Tendríamos lo siguiente, todo esto es el cluster y en la memoria RAM del 
+clúster tenemos el dataframe ‘dfPersona’ y después de 1 hora tenemos el dataframe ‘df1’, esperamos 5 minutos y le vuelvo a 
+hacer un “.show” al dataframe ‘df1’, ya no tengo que esperar nuevamente 1 hora que el dataframe cree, porque, ya se creó, así 
+que el Action no lo vuelve a crear, simplemente te muestra en un par de segundos, los 20 primeros registros que tenga el 
+dataframe, no tiene sentido volver a crearlo, lo creamos la primera vez. Pasan 5 minutos y le vuelvo a hacer un “.show” ya está 
+creado en memoria RAM así que solo te lo muestra. El Action solo lo crea la primera vez, entonces, el primer “.show” tomará 
+1 hora, pero de ahí ya lo muestra directamente, porque ya existe en la RAM. Ahora entendamos lo del GARBAGE COLLECTOR. 
+
+El GARBAGE COLECTOR es el módulo que tiene Java que va liberando la memoria RAM de los dataframe que ya fueron creados con un 
+Action, entonces constantemente el GARBAGE COLLECTOR se mueve sobre las zonas de memoria RAM del clúster buscando dataframes 
+que ya hayan sido llamados por un Action. Esa es la naturaleza que tiene el GARBAGE COLLECTOR, esto se hace para liberar las 
+zonas de memoria RAM y es perfectamente normal recordemos que en Spark lo primero que se va a acabar es la memoria RAM, 
+entonces GARBAGE COLLECTOR optimiza ese uso de memoria RAM borrando datos que ya fueron llamados por un Action. 
+
+Este es un comportamiento con el que nos vamos a encontrar dentro de Spark, el cual tiene que ser controlado. También hay 
+patrones de diseño para controlar el GARBAGE COLLECTOR, porque, esto potencialmente es un problema, literalmente nos hace
+perder tiempo.
+
+
+Los archivos de texto plano no guardan la metadata y los archivos binarios si lo hacen
+--------------------------------------------------------------------------------------
+
+Si guardamos la información (en un dataframe) y luego la recuperamos y consultamos el esquema de metadatos, nos devolverá
+todo como tipo de datos STRING. Esto no sucede con los archivos BINARIOS. Los archivos binarios guardan la metadata.
+
+
+Compresión en un archivo de formato AVRO
+----------------------------------------
+
+Los archivos de formato AVRO al guardalos con compresión, por ejemplo, 'snappy', la partición no lo va a indicar, no asi, 
+como una particion de formato PARQUET:
+
+dfResultado.write.format("avro").mode("overwrite").option("compression", "snappy").save("dbfs:///FileStore/_spark/output/dfResultadoAvro")
+part-00000-tid-953579043164171325-b11d8b33-b690-4093-a17f-04a8d66b19e5-40-1-c000.avro
+
+dfResultado.write.format("parquet").mode("overwrite").option("compression", "snappy").save("dbfs:///FileStore/_spark/output/dfResultadoParquet")
+part-00000-tid-4278820346301987657-30a2a881-3b6e-40f4-8dc6-48bea272446e-36-1-c000.snappy.parquet
+                                                                                ----------
+
+¿Por qué sucede esto?
+
+Esto se debe a que el formato binario AVRO por defecto comprime los datos, entonces, como por defecto comprime los datos, no
+tiene sentido que agregue la extensión '.snappy', dado que cualquier cosa en AVRO, YA ESTÁ COMPRIMIDO.
