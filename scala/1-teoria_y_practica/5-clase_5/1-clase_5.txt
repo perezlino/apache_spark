@@ -1,0 +1,647 @@
+CLASE 5
+=======
+
+Tunning de recursos computacionales (Laboratorio 016)
+=====================================================
+
+Hace dos semanas nos habíamos quedado en el punto del arquetipo avanzado de procesamiento. En esencia, era lo que habíamos 
+resuelto en el ejercicio número 3. Ahora, sobre este arquetipo, vamos a agregar PUNTOS DE OPTIMIZACIÓN. Los PUNTOS DE 
+OPTIMIZACIÓN van a estar enfocados en reservar cierta potencia del clúster y optimizar el uso de la memoria RAM y también 
+evitar reprocesamientos, por ejemplo, van a entender que hay cadenas compartidas en las cuales constantemente se reprocesa y 
+bueno, ya hay patrones de diseño que vamos a usar en ciertos puntos en específico, ya que conocemos el arquetipo avanzado 
+sobre este arquetipo. Al final de la clase vamos a poner los patrones de diseños que aprenderemos el día y ese es el ejercicio 
+que deberán de resolver. 
+
+¿Qué implica hablar de optimizaciones? 
+
+Básicamente a estas técnicas de optimizaciones se les conoce como TUNING COMPUTACIONAL. Vamos a hablar de diferentes técnicas 
+de optimización y vamos a ir desde una de las más básicas a una de las más complejas. Primero, hablemos de lo que implica 
+RESERVA DE POTENCIA COMPUTACIONAL. Ya sabemos que un clúster tiene un 100% de la potencia, pero desde el punto de vista de 
+recursos computacionales, esto significa la cantidad de memoria RAM y la cantidad de núcleos de CPU. La terminología para hacer 
+referencias a los núcleos es una pequeña u (uCPU). Aquí hay que ser más técnicos y tengamos cuidado con las definiciones. Una 
+cosa es la CPU y otra cosa son los núcleos de CPU (uCPU) y otra cosa son las virtual CPU (vCPU). Lo que nos va a valer es la 
+vCPU. 
+
+Pero, ¿qué significa una virtual CPU (vCPU)? 
+
+Primero entendamos el concepto de la CPU, la CPU es el componente que procesa lo que tú codificas en el lenguaje de programación, 
+toma la instrucción y la ejecuta. Dentro de la CPU está el núcleo de la CPU, quien realmente es quien ejecuta esa sentencia de 
+código hace lo que tiene que hacer y listo. Un núcleo de CPU solamente puede procesar una instrucción de código a la vez, así que 
+probablemente tú tengas una laptop o una computadora que sea multi núcleos, es decir, que tu CPU, por ejemplo, podría tener 
+cuatro núcleos. Eso significaría que podrían haber cuatro procesos en paralelo ejecutándose sobre cada 1 de estos núcleos de CPU. 
+Por lo tanto, los núcleos del CPU son los que pueden paralelizar un proceso. Cada núcleo solo puede tomar un hilo de 
+procesamiento. En unos momentos vamos a extender el concepto de las virtual CPU, así que por ahora ignoremos este tema. Así que 
+desde un punto de vista de infraestructura, lo que tenemos es cierta cantidad de memoria RAM en el clúster y cierta cantidad de 
+núcleos de CPU. 
+
+¿Cuál es el 100% de la potencia del clúster? 
+
+Eso va a depender del entorno donde tú estés trabajando. Para hacer los cálculos vamos a poner números fáciles de manejar. 
+Digamos que tenemos 1000 gigas de memoria RAM. Y tenemos y 400 núcleos de CPU. Cuando queramos trabajar sobre un clúster, lo 
+primero que hay que conocer es cuál es la potencia total de ese clúster, cuál es el 100% de esa potencia. Lo segundo es bien, 
+empecemos a trabajar, vamos a hacer esto es lo más realista posible. Inicialmente vas a estar en el clúster de desarrollo, habrá 
+un clúster de desarrollo, habrá un clúster de calidad y habrá un clúster de producción. Primero trabajarás en el clúster de 
+desarrollo para hacer tu proceso. ¿Cómo va a funcionar esto? En el clúster de desarrollo habrá diferentes desarrolladores 
+trabajando, no solo estarás tú solo. Para hacer los cálculos simples, digamos que hay 10 desarrolladores, hay 10 personas que 
+están trabajando sobre este clúster. Cada una de estas personas tiene que tener su propia área de trabajo, es decir, separar 
+cierta cantidad de memoria RAM y cierta cantidad de núcleos de CPU para hacer sus procesos. Tal vez esta persona está siendo un 
+proceso muy simple, como un proceso de reportería y tal vez esta otra persona está haciendo algo muy complejo, como un proceso de 
+red neuronal. Por supuesto que son procesos diferentes. Probablemente esta persona que está implementando una red neuronal 
+necesite más potencia del clúster, quizá un 30%. Y esta persona que está haciendo un simple reporte, tal vez con un 10% de la 
+potencia del clúster, sea suficiente. Pero eso no lo podemos saber de antemano. En la etapa de desarrollo, digamos que el reporte 
+tiene que estar en 10 horas, de un día para otro tienes 10 horas de ventana de tiempo, aquí está el proceso, lo ejecutas a las, 
+digamos, a las 20:00 de la noche y el proceso está listo a las 06:00 de la mañana. A las 09:00 de la mañana las personas entran 
+en la empresa y dicen: “ah ok, perfecto, ya tenemos el proceso listo”, entonces habrá procesos que tienen una ventana de tiempo 
+muy grande de ejecución. Pero también habrá procesos de reportería que tengan una ventana de tiempo muy pequeña. Tal vez los 
+datos lleguen a las 09:00 de la mañana y la gerencia te dice que el reporte tiene que estar en 1 hora, entonces no tenemos esa 
+ventana de tiempo, tal vez sea el mismo reporte, pero en dos situaciones diferentes, con una ventana muy grande o una ventana muy 
+pequeña. Con estas tecnologías de Big Data podemos jugar con la escalabilidad, es decir, quieres que el reporte sea 5 veces más 
+rápido, entonces le ponemos 5 veces más potencia del clúster. Por lo tanto, no solamente la reserva de la potencia está en 
+función de la complejidad del algoritmo, sino también en el tiempo que queremos que se ejecute este proceso. Y aquí es donde 
+vienen los problemas, realmente cuánta potencia del clúster necesitamos para que nuestro proceso pueda ejecutarse y cumpla el 
+nivel de servicio esperado, o sea, que se ejecute en el tiempo que negocio quiere que se ejecute. Eso no se resuelve en el 
+Clúster de desarrollo, en el clúster de desarrollo lo único que nos va a importar es el output, que el output del proceso sea 
+correcto. Da igual si negocio lo quieren en 1 hora y nuestro proceso al final toma 10 horas, eso se resuelve después. Así que 
+aquí no vamos a tener este problema, lo único que queremos es que el output que los desarrolladores tengan sea el correcto. 
+
+¿Cómo se reserva la potencia del clúster en un clúster de desarrollo? 
+
+Simplemente se hace una división del 100% de la potencia del clúster entre el número de desarrolladores que van a trabajar sobre 
+el clúster de manera concurrente. Digamos que hay 10 desarrolladores, entonces a cada 1 le correspondería el 10% de la potencia 
+del clúster. Esa sería su área de trabajo. Ahí van a ejecutar el proceso y verán si el output es correcto o no lo es, si no lo 
+es, pues harán las correcciones hasta que sea correcto. Y da igual si el proceso se toma 10 horas en ejecutarse o 2 horas o 
+4 horas, lo que el desarrollador está haciendo es simplemente construir el proceso para que el output sea correcto. Ya en el 
+clúster de calidad se va a colocar los números correctos. ¿Cómo se hace ese cálculo? Lo vamos a ver en unos momentos. Así que en 
+el punto de partida estás en la etapa de desarrollo. ¿Cuánta reserva de potencia de Clúster tienes que hacer? Pues el número de 
+desarrolladores concurrentes lo vamos a dividir sobre el 100% de la potencia del clúster. Una vez que tenemos el porcentaje que 
+puedes tomar para trabajar sin interrumpir al resto de desarrolladores, hay que llevar esto a números concretos. ¿Qué significa 
+el 10% de la potencia de este clúster? 100 gigas de memoria RAM y 40 núcleos de CPU, tendrías esta potencia para que puedas 
+ejecutar tu proceso. Vamos a colocar estos números en nuestra sesión de Spark. Hasta el momento hemos estado usando una variable 
+llamada Spark. Esta variable lo que hacía era tomar el 100% de la potencia del clúster para ti solo, pero nosotros tenemos que 
+crear esta variable y sobre ella colocar esa potencia del clúster. A esta variable especial se le conoce como la sesión de Spark 
+o en inglés, el SparkSession. Dentro del SparkSession, esta la reserva de la potencia. 
+
+1. El primer paso es entender qué es el 100% de la potencia del Clúster desde un punto de memoria RAM y desde un punto de núcleos 
+de CPU. 
+
+2. Lo segundo es saber cuántos desarrolladores concurrentes habrán y se hace la división, el 100% entre 10 desarrolladores, cada 
+1 tendra el 10%. 
+
+3. Lo tercero es llevar ese 10% a números concretos. Cada desarrollador tomará 100 gigas de RAM y 40 núcleos de CPU. 
+
+Ahora con esto vamos a crear el SparkSession, nuestra sesión de Spark. Para crear esta variable especial tendremos que saber cómo 
+funciona Spark. Los números no se colocan de manera directa, vamos a hacer lo siguiente. Primero hay que entender el concepto de 
+cómo Spark procesa todo. Acá tenemos un archivo de datos que vamos a procesar y acá hay una instancia de nuestro proceso y este 
+archivo quién sabe cuántos registros tenga. Entonces este  instancia uno por uno, va a empezar a procesar los registros de un 
+archivo de datos de manera lineal. Pero podemos paralelizar el proceso del mismo programa, por ejemplo, podríamos poner cuatro 
+instancias para que el proceso vaya cuatro veces más rápido, esta instancia procesa esta parte, esta otra esta parte, esta otra 
+esta parte y así sucesivamente. Entonces, mientras más instancias del programa tengamos, más rápido va a ir el proceso. En el 
+caso de Spark a una instancia de nuestro programa se le conoce como EXECUTOR, ya que ejecuta una parte del programa. Entonces es 
+simple, MIENTRAS MÁS EXECUTOR tú tengas MÁS RÁPIDO VA A IR EL PROCESO. 
+
+¿Cómo se crea un Executor? 
+
+En Spark, un Executor necesita de 2 núcleos de CPU para poder funcionar, entonces este va a ser nuestro punto de partida, pero 
+aquí hay que tener cuidado. Sabemos que desde un punto de vista de la velocidad existen dos tipos de procesos, los procesos batch 
+y los procesos de tiempo real. Por ejemplo, este proceso tal vez está orientado a que se procese en 15 minutos o en 20 minutos o 
+en 2 horas o en 10 horas o en 12 horas. Es un proceso batch que le das al botón y bueno, se tomará lo que tenga que demorarse, 
+minutos u horas, incluso hasta días. En cambio, un proceso de tiempo real es un poco diferente, está orientado a le damos al 
+botón y en un par de segundos debería estar el proceso. Los Executors funcionan diferentes para los procesos bachateros y los 
+procesos de tiempo real, que ya los vamos a empezar a incrementar desde la próxima semana. 
+
+   ______________________________________________________________________________________________________________________
+  |                                                                                                                      |
+  | En el caso de los Executors para procesos batcheros, cada Executor va a funcionar con dos núcleos de CPU. Pero en    |   
+  | el caso de que sean Executor para procesos en tiempo real, un Executor de tiempo real necesita cuatro núcleos de CPU |
+  | para funcionar si no el Executor colapsa y pues el proceso no funciona.                                              |   
+  |______________________________________________________________________________________________________________________|
+
+Así que veamos cuántos Executors podemos crear. Estamos frente a un proceso batch, cada Executor tendrá dos núcleos de CPU. 
+¿Cuántos núcleos de CPU’s tenemos a nuestra disposición? 40. 
+
+4. Por lo tanto, el cuarto paso es calcular el número de Executor que podemos poner para nuestro proceso, es decir, el número de 
+instancias paralelas que tendrá nuestro programa. ¿Como se calcula? el número de executors es igual al número total de núcleos de 
+CPU que tengamos, dividido entre 2 para procesos bachateros o cuatro para procesos de tiempo real. En nuestro caso sería 2, así 
+que el número de Executor sería 20. 
+
+                                          ______________________________________________
+                                         |                                              |
+                                         |   4 Executors = (40 uCPUs)/2  = 20 Executors |
+                                         |______________________________________________|   
+
+Por lo tanto, nuestro programa tiene un nivel de paralelización de 1 por 20, al menos hasta el momento. Una vez que hemos 
+calculado el número de Executors, los Executors no funcionan por sí solo, procesan cierta parte del archivo, por lo tanto, 
+necesitan memoria RAM para funcionar. Cada Executor va a tener una parte de la memoria RAM asignada. 
+
+5. El quinto paso es luego de saber cuántos Executor tenemos, vamos a calcular la memoria RAM para cada Executor, ¿como se 
+calcula?. La memoria RAM total que tenga reservada, dividida entre el número de Executor, y eso es lo que cada Executor tomaría 
+para funcionar desde el punto de vista de memoria RAM, 100 GB entre 20 Executors en nuestro caso es 5 GB de memoria RAM por 
+Executor. 
+
+Con esto ya tenemos la reserva del 10% de la potencia del clúster. Entonces. ¿Ese 10%, a qué lo debemos traducir? Al número de 
+Executor que necesitamos, al número de núcleos de CPU que el proceso va a tener y a la cantidad de memoria RAM por Executor. En 
+nuestro ejemplo, por ejemplo, este 10% que significaba: 20  Executors de 2 núcleos de CPU cada uno y 5 GB de memoria RAM. 
+Colocando estos 3 datos en nuestra sesión de Spark ya tenemos el 10% de la reserva del Clúster. Esto es lo mínimo que hay que 
+hacer para reservar la potencia, pero en un escenario empresarial aún no es suficiente, hay que colocar algunos parámetros 
+adicionales. Una cosa es reservar la potencia del clúster y otra cosa es reservarla de manera correcta. Vamos a optimizar esta 
+reserva del 10% lo más que se pueda, ya lo tenemos reservado, ahora optimicemos la reserva. ¿Qué más tenemos que definir? Vamos 
+a optimizar el uso de memoria RAM y el uso de los núcleos de CPU. Hablemos primero de memoria RAM, qué es lo que generalmente 
+colapsa en los procesos de Spark. Para esto hay que entender como funciona Spark. Tenemos un Executor que tiene 5 GB de memoria 
+RAM para funcionar. Eso significa que digamos que tenemos pues 10 Executor cada uno con 5 GB de memoria RAM para funcionar y 
+tenemos un archivo muy pesado de 1000 GB. Si partimos esto en 10 partes, pues tendríamos 100 GB de datos en cada parte. No 
+podemos volcar directamente estos 100 GB en el Executor que va a procesar porque va a colapsar, ya que el Executor solamente 
+tiene 5 GB de espacio. Entonces, Spark lo que hace, es pasarlo por partes, es la lógica de procesamiento por partes que vimos 
+en la primera clase, pero de manera automática. Entonces para ti eso es transparente. ¿Cuál es el problema? Esta lógica de 
+procesamiento por partes que Spark implementa tiene un margen de error del más menos 10% ¿qué significa? Significa que, si el 
+Executor puede soportar hasta 5 GB de datos, Spark tiene un margen de error al distribuir la data. Que puede ser que no te envía 
+5 GB. El 10% de 5000 MB es 500 MB, entonces podría ser que desaprovecha 500 GB de RAM y solamente te envían 4500 MB de datos a 
+ser procesado. Ah ok, acá teníamos 500 MB de RAM que no se utilizaron, ah, bueno, no importa, ya en la siguiente iteración los 
+procesará. El problema es y ¿qué pasa si se equivoca en la distribución de la carga de trabajo, pero en la cota superior, o sea 
+que te envía 5500 MB? eso no va a entrar aquí y este Executor va a terminar colapsando. Si es Spark se equivoca y te envía menos 
+de un 10% de lo que el Executor podía soportar, ahí no pasa nada, pero si Spark se equivoca y te envía aún +10% de lo que el 
+Executor podía soportar colapsa, y esto, por supuesto, hace que se pierda esa parte del procesamiento y ahí en la consola de 
+ejecución, te va a aparecer el mensaje de Memory Overhead (Desbordamiento de memoria RAM), o sea el Executor no tenía la 
+suficiente memoria RAM para procesar lo que se supone que tenía que procesar. Para evitar este problema de desbordamiento de 
+memoria RAM vamos a habilitar otra variable dentro de los Executors conocida como el MEMORY OVERHEAD. ¿Qué valor le vamos a 
+colocar? Como en el peor de los casos, se puede producir un desbordamiento del +10%, Spark  dice, en el peor de los casos, si 
+todo funciona mal en el algoritmo de distribución de carga de trabajo que Spark implementa, el peor de los casos es 10%. Es 
+imposible que se dé un 11% o un 15%. Entonces, el peor de los casos es 10%. Hay una variable especial que se activa cuando un 
+Executor está a punto de desbordar su memoria RAM. Vamos a decirle, oye, si el Executor está a punto de desbordar su memoria 
+RAM cuánta memoria RAM le vamos a asignar, pues en el peor de los casos era el 10%, así que le asignaremos el 10% de lo que tiene 
+el Executor en su memoria RAM. Los gigabytes en Spark se aproximan a 1000 megabytes, así que podemos asumir que acá tenemos 
+5000 megabytes. El 10% de estos serían 500 megabytes. De esta manera, si Spark se equivoca y te envía un 10% adicional en el 
+peor de los casos, esta variable especial en tiempo de ejecución reserva esa memoria RAM adicional y evita que el Executor 
+colapse y listo, puede seguir funcionando. De esta manera estamos optimizando el uso de esta memoria RAM. 
+
+          __________________________________________________________________________________________________________  
+         |                                                                                                          |                    
+         |   Memory overhead = 10% de lo que hayas colocado en la variable de reserva de memoria RAM por Executor   |
+         |__________________________________________________________________________________________________________|
+
+
+6. Ahora vamos a optimizar los núcleos de CPU.
+
+Hay algo conocido como el factor de paralelización, que mide que es la unidad de medida con la cual sabemos que tan rápido va 
+nuestro programa. ¿Cómo se calcula? el factor de paralelización es igual al número de Executor multiplicado por los núcleos de 
+CPU que utiliza ese Executor. 
+
+                                         ____________________________________________   
+                                        |                                            |       
+                                        |    Factor de paralelización = 20 x 2 = 40  |   
+                                        |____________________________________________|
+
+
+Por ejemplo, aquí tendríamos un factor de paralelización de 40. Nuestro proceso está con un x40. Pero podemos hacer este factor 
+de paralelización aún más rápido con la misma cantidad de núcleos de CPU y Executor. ¿Cómo se hace? Para eso hay que entender 
+cómo funcionan los núcleos de CPU. Una cosa son las computadoras que tú puedas tener en tu casa, te compras una computadora y te 
+dicen es multi núcleo, o sea que aquí tu CPU tiene cuatro núcleos de CPU. Eso significa que a la vez puedes tener el Word abierto 
+o el PowerPoint, el Excel y estar navegando por Internet. Significa que esos procesos realmente se ejecutan de manera paralela. 
+Supongamos que en tu casa tienes una CPU, tu computadora con una CPU que solo tiene un núcleo, y abres Word, Excel, PowerPoint y 
+estás navegando por Internet. Como solamente hay un núcleo de ejecución, los comandos de cada programa se intercalan solo que se 
+ejecutan tan rápido que para ti aparentemente funcionan de manera paralela y ves todo funcionando a la vez. Pero mientras más 
+programas tú abras en tu computadora, pues esas instrucciones se van intercalando cada vez más y por lo tanto, el programa deja 
+de responder en algún momento y la computadora se hace lenta, es lo clásico. Solamente hay una ejecución real, cuando cada 
+proceso está en núcleo diferente, y de esta manera, realmente cada programa está ejecutándose, pues de manera paralela lo otro es 
+solo un seudo paralelismo. Esto es lo que pasa, pero en computadoras de casa, en la computadora que tú puedes tener en tu hogar,
+otra cosa son los servidores empresariales en donde tú vas a estar trabajando, por ejemplo, si todas estas instancias viven en la 
+nube de Azure, GCP o AWS, pues los núcleos de CPU no son los núcleos de CPU que tienen instaladas las computadoras en tu casa, 
+están orientadas servidores y esto funciona un poquito diferente. Digamos que tenemos una CPU también de cuatro núcleos de CPU, 
+pero son núcleos de CPU orientados a servidores empresariales. Estos núcleos de CPU permiten tener varios hilos de ejecución a 
+la vez de manera paralela, a diferencia de los núcleos de CPU que pueda estar en tu casa. ¿Pero cómo funciona? Y digamos, por 
+ejemplo, si yo le envío solo un hilo de procesamiento, un núcleo de CPU de un servidor empresarial lo estaría desperdiciando. 
+Generalmente al menos desde el punto de vista de procesos de Spark, los núcleos de CPU de servidores empresariales pueden 
+procesar hasta 3 hilos de Spark. Pero hay un problema. Digamos que estás haciendo reportería simple, entonces bien, no hay 
+problema, le mando 3 hilos a un núcleo de CPU y funciona bien. Pero digamos que estás construyendo una red neuronal, algo mucho 
+más complejo, ahí las instrucciones son más complejas y probablemente terminen colapsando el núcleo de CPU. Con 3 hilos de 
+procesamiento en un mismo núcleo de CPU estamos usando el 100% de la potencia de ese núcleo de CPU. Pero esto es muy riesgoso 
+porque basta que 1 de estos hilos tengo una instrucción que sea computacionalmente muy compleja puede exceder ese límite y 
+colapse el núcleo de CPU. Así que a pesar de que Spark te dice: “puedes ponerle hasta 3 hilos en cada núcleo”, es demasiado 
+riesgoso, hay un riesgo de colapso. ¿Cuál sería la alternativa? Bueno, entonces, con 2 hilos de CPU no le va a pasar nada. El 
+problema es que hay solamente estaríamos usando el 66% de la potencia de este núcleo de CPU y habría un 33% que estaría flojo, 
+que no se estaría utilizando y es tentador mandar un hilo más. ¿Qué es lo que se hace? para esto si yo aplico una estrategia 
+inteligente, va a depender de la complejidad algorítmica. Si en ese momento los hilos de procesamiento tienen algún algoritmo 
+simple, un reporte simple, pues pásale 3 hilos. Pero si de pronto este núcleo de CPU empieza a recibir instrucciones complejas 
+como de redes neuronales, en ese caso solo pásale 2 hilos. Si es algo simple, que entren 3, si es algo complejo, que solo entren 
+dos y de esta manera evitamos el colapso del núcleo de CPU. ¿Cómo le indicamos eso?. Pues van a entrar 2.5 hilos de CPU a este 
+nucleo. Eso que significa que a veces van a entrar 3 hilos y a veces eran dos, ya el propio motor de Spark lo decide en función 
+de si está a punto de llegar al 100% de la potencia de ese núcleo, si está cerca al 100%, lo reduce solo a dos hilos. Sí ve que 
+todavía tiene potencia le pone ese tercer hilo, eso significa este numero 2.5. ¿Para qué nos va a servir este numerito? Para 
+hacer lo siguiente. ¿Cuántos núcleos de CPU tenemos en total? Tenemos 20 Executors de 2 núcleos de CPU cada uno, o sea 40 núcleos 
+de CPU. Pero ahora, sobre estos 40 núcleos de CPU vamos a hacer lo siguiente, cada núcleo de CPU va a soportar hasta 2.5 hilos. 
+Serían 40 núcleos de CPU por cada 2.5 hilos, esto nos daría en total 100, ¿100 que? pues 100 hilos de procesamiento distribuidos 
+en cada núcleo de CPU. Pero decir todo eso, pues es muy largo, así que a este numerito le dicen 100 vCPUs (Virtual CPUs), ya que 
+no son realmente CPUs físicas, son CPU virtuales, porque el núcleo es algo físico. A veces cada núcleo recibirá dos hilos, a 
+veces recibirá 3 y en función de eso, pues hará la distribución. Entonces, ¿cómo le dicen a todo esto? Virtual CPU, evitan decir 
+todo ese termino largo. ¿Cuántas virtual CPUs tendríamos? 100. Y esto es lo que representa el factor de paralelización. Al 
+momento de configurar nuestra sesión de Spark, hay que optimizar el uso de los núcleos de CPU, colocando ese numerito, ¿como se 
+calcula? el número de Executors multiplicado por los núcleos de CPU que tenga cada Executor multiplicado por 2.5.
+
+                                         ___________________________________________________   
+                                        |                                                   |       
+                                        |    Factor de paralelización = 20 x 2 x 2.5 = 100  |   
+                                        |___________________________________________________|
+ 
+
+Y listo, ya tenemos optimizado los núcleos de CPU de nuestra sesión de Spark. Estos son todos los parámetros que hay que colocar 
+para reservar este 10% de la potencia del clúster. Primero hay que calcular qué significa el 10% y luego optimizar ese 10%. 
+
+7. Un último parámetro que hay que colocar es recordemos que Spark utiliza algún lenguaje de programación para funcionar como 
+Python, Scala R, Java y qué sé yo. Realmente quien ejecuta todo es Spark y esta reserva se está haciendo para que Spark funcione. 
+Pero el lenguaje no funciona por sí solo, también necesita una reserva para funcionar. Sin embargo, el lenguaje no ejecuta nada, 
+así que da igual en que lenguaje tú estés trabajando. El lenguaje corre en una instancia especial conocida como Driver. ¿Cuánto 
+necesita esta instancia especial para funcionar? solo 1 GB de memoria RAM, no se le coloca más, ya que el lenguaje no va a 
+ejecutar nada, solamente tenemos una instancia en memoria RAM para que el lenguaje funcione y le pueda enviar las instrucciones 
+a Spark. Así que dentro deL driver debemos reservar 1 GB de memoria RAM. 
+
+¿Qué es lo que pasa cuando colocamos número sin sentidos extremadamente grandes dentro de la sesión de Spark?
+
+                         _______________________________________________________________________
+                        |                                                                       |    
+                        |    var spark = SparkSession.builder.                                  |    
+                        |    appName("Mi Aplicacion").                                          |
+                        |    config("spark.driver.memory", "9999999999999g").                   |
+                        |    config("spark.dynamicAllocation.maxExecutors", "9999999999999").   |
+                        |    config("spark.executor.cores", "9999999999999").                   |
+                        |    config("spark.executor.memory", "9999999999999g").                 |
+                        |    config("spark.executor.memoryOverhead", "9999999999999g").         |
+                        |    config("spark.default.parallelism", "9999999999999").              |
+                        |    enableHiveSupport().                                               |    
+                        |    getOrCreate()                                                      |    
+                        |_______________________________________________________________________|
+
+
+Generalmente los desarrolladores vean que acá no hemos puesto los números por poner, cada número que se ha colocado ha tenido una 
+justificación y también toda una explicación detallada que de qué es lo que pasa por detrás a nivel de infraestructura. Una vez 
+que entiendes todo esto, vean que los números ya tienen una forma matemática de ser colocados, pero no se colocan por colocar. Lo 
+ideal sería que todos los desarrolladores sepan de esto. Pero en los escenarios reales te vas a encontrar cuando le das 
+mantenimiento del código con cosas como esta: “oye, quiero que mi programa funcione muy rápido. A ver, lo voy a poner mucha 
+memoria RAM aquí y acá también lo voy a poner un número muy grande y aquí también un número muy grande para que el programa vaya 
+más rápido y funcione mejor y así sucesivamente, no, entonces eso no tiene ningún sentido. Pero vean que si le doy CTRL + Enter, 
+Spark lo toma, no aparece un mensaje de error. ¿Qué es lo que pasa cuando colocamos número sin sentidos extremadamente grandes 
+dentro de la sesión de Spark? Spark, dice, de acuerdo, yo no puedo reservar millones de gigas de memoria RAM porque el clúster 
+no los tiene, entonces bien reservo todo lo que tenga el clúster y acá toma el 100% de la potencia del clúster y por lo tanto 
+ningún desarrollador va a poder trabajar en el clúster. A eso se le conoce como el anti-patrón de monopolización. En esencia, 
+hemos hecho esto, hay 10 desarrolladores acá, y esta persona viene a las 08:00 de la mañana y ejecuta este código que no tiene 
+sentido y listo. Tiene el clúster para el solo. A las 08:05 de la mañana viene otro desarrollador y ya no puede trabajar, porque 
+el clúster no tiene recursos para que él pueda crear su sesión. Por eso es muy importante que en un clúster de desarrollo se 
+tenga un tipo de estrategia en función de cuántas personas van a trabajar de manera concurrente. 
+
+¿Qué pasa si nos piden que el proceso vaya más rápido?
+
+Una vez que has hecho la reserva, ahora sí te pones a codificar tal cual hemos aprendido en clases anteriores. ¿Qué es lo que 
+va a suceder? Digamos que ok, terminaste el proceso y ahora lo vas a probar de principio a fin y le das al botón de ejecutar 
+para que se ejecute todo. Y con el 10% de la potencia del clúster el proceso ha tomado 4 horas. El output del proceso es 
+correcto, negocios dice perfecto, el output está bien. Esto pasa al clúster de calidad, lo ejecutan y verifican que el output 
+es correcto, pero negocio lo quiere en 1 hora. Digamos, aqui está el proceso en el clúster de desarrollo, tú dices está bien, 
+pasa al clúster de calidad y el equipo de calidad probablemente diga: “oye, hay un error corrígelo”, lo corriges, vuelve el 
+proceso al clúster de calidad y en algún momento el equipo de calidad te dirá el proceso es correcto, ahora enfócate en el nivel 
+de servicio. Con el 10% de la potencia del clúster, el proceso tomaba 4 horas. ¿En cuánto tiempo lo quieren? Lo quieren en 
+1 hora, cuatro veces más rápido. Significa que hay que calcular cuánto sería el 40%, ya que, esta es una tecnología de Big Data 
+y por lo tanto es escalable siempre y cuando hayamos respetado todos los patrones que estamos aprendiendo hasta ahora. Esta 
+escalabilidad solo se cumple si se programa sobre Spark con los patrones de diseño que estamos aprendiendo, si programas por 
+programar, la escalabilidad no está garantizada en Spark. Una vez que haces el factor de multiplicación, esto pasa después de 
+que el equipo de calidad te da el OK, o no tiene sentido que apliques esto si todavía hay cosas que corregir en el proceso, 
+pero una vez que el proceso esté bien, ahora, si te enfocas en eso. Tangibilizas estos números a qué significa el 40% de la 
+potencia de este clúster y actualizas esos números en la sesión de Spark que tenga tu programa, le colocan los números correctos 
+y listo. Hay garantía de que el proceso irá a 1 hora y eso ya va al clúster de producción.
+
+Digamos que pasa a lo siguiente, me voy a inventar un número cualquiera. El proceso, con el 10%, tomó 20 horas. Y lo quieren en 
+1 hora, o sea, lo quieren 20 veces más rápido, significa que necesitarías un 200% de la potencia del clúster, pero eso no tiene 
+sentido. Recuerda que esto no se va a ejecutar en el clúster de desarrollo, se va a ejecutar en el clúster productivo, que es 
+mucho más grande que el clúster de desarrollo. Tangibilizas estos números a números concretos y estos números ya calculados, y 
+esos números deben de entrar dentro del cluster de producción y si no, pues hay que mandar a aumentar el número de servidores que 
+el clúster necesite para cumplir el nivel de servicio. También podría darse el caso de que: “oye, no se puede aumentar el número 
+de servidores del clúster”, bueno, entonces ahí el nivel de servicio no puede llegar al nivel pedido, tampoco se puede hacer 
+magia para que el proceso vaya más rápido. Esto ya son escenarios más realistas, pero desde un punto de vista de paso a 
+producción es simplemente hacer la regla de 3 simple y calcular los números que hay que colocar en el SparkSession para llevar 
+el script a producción. 
+
+
+SHOW (Laboratorio 017)
+======================
+
+Vamos a ver otras técnicas de optimización. Otro de los problemas con los que te vas a encontrar. Es con la función SHOW que 
+muestra la ejecución de un Dataframe. Voy a explicarlo primero de manera teórica. La función show potencialmente es un 
+antipatrón de diseño en el código. Recordemos cómo funciona Spark. Acá tenemos la memoria RAM y acá con un proceso de lectura, 
+tenemos el primer Dataframe que se va a crear. Y definimos el primer transformation que creará el Dataframe 2, que aún no 
+existe hasta que lo ejecutemos con un action, como vimos en sesiones anteriores. El segundo paso es hacerle algo a la tarea 
+anterior que crea el Dataframe 3. El tercer paso es hacerle algo al Dataframe anterior, que cree el Dataframe 4. Y el último 
+paso es crear el Dataframe resultado. Esta es la cadena de proceso. Al final probablemente queremos tener esto en memoria RAM 
+y guardarlo en un archivo de datos. Pero nuevamente hablemos de la etapa de desarrollo, ¿cómo vas a estar trabajando? Cada 
+paso que tú ejecutes, aquí tienes el proceso de Dataframe 2, vamos a ver si el paso es correcto, le haces un .show() y como 
+el .show() es un action, crea el Dataframe 2. Entonces en tu código tienes un .show() acá. Luego programas el paso número 3 
+en el Dataframe 3 y le haces un .show() para ver que sea correcto. Lo mismo con el Dataframe 4. Y lo mismo con el Dataframe 
+resultante. 
+
+¿Cuál es el problema de llamar a la función .show()? 
+
+Cuando esto pase a producción, ¿qué es lo que podría suceder?  La función .show() van a forzar la ejecución de la cadena de 
+procesos. Recuerda que en el entorno de desarrollo tú con un CTRL + Enter le estás dando al .show() para ver la resultante. 
+¿Pero qué pasa en un entorno de producción? Ahí no hay nadie que le dé un CTRL + Enter, el script se ejecuta de inicio a fin. 
+Va a pasar lo siguiente, supongamos que el primer paso (creación del Dataframe 1) se toma 1 hora y los siguientes pasos 
+también se toman el mismo tiempo. Se ejecuta el primer paso. Se creó el Dataframe con el .show(), y pasó 1 hora. Ahora viene 
+el segundo paso, se ejecuta también utilizando la función .show() y también se crea en memoria RAM. Hasta ahí van 2 horas de 
+procesamiento. Hasta ahí no pasa nada raro, pero justo el GARBAGE COLLECTOR pasa y borra estas dos variables, los dos 
+Dataframes que se crearon. Y viene el paso 3, que necesita que los anteriores existan. Entonces nuevamente hay que esperar 
+2 horas para que se vuelvan a crear y luego la hora que corresponde al paso 3. En total, ahí van 5 horas simplemente porque 
+tuviste mala suerte. Y el Garbage Collector borró lo que con los .show() ya se habían creado. Ahora vamos al último paso y 
+digamos que nuevamente tienes mala suerte y el Garbage Collector te borra todo. Así que nuevamente tiene que ejecutar por el 
+.show() toda la cadena de procesos. ¿Cuánto se demora? Pues 9 horas, cuando el proceso estaba calculado que se ejecutaba en 
+4 horas, ¿de dónde salieron esas 5 horas? pues de que el Garbage Collector te iba borrando algo cada vez que tú lo creabas 
+con el .show(). 
+
+¿Qué es lo que se hace? 
+
+En los entornos de desarrollo está perfecto usar el .show(), De hecho se tiene que hacer para ver que cada paso sea correcto, 
+pero cuando esto pasa producción hay que borrar todos los .show() para evitar estos comportamientos, lo único que se define 
+es la cadena de procesos y al final habrá un action SAVE que guardará el Dataframe en un archivo en el disco duro. Entonces 
+el action, ya manda a ejecutar toda la cadena de procesos y ya sabemos que cuando una cadena de procesos está ejecutando el 
+Garbage collector nunca la va a eliminar. En 1 hora se crea el primer Dataframe, en la sesegunda hora se crea el segundo 
+Dataframe y así sucesivamente. Así que el patrón de diseño conceptualmente es simple. En el entorno de desarrollo, los .show() 
+están permitidos, pero cuando esto pasa producción hay que quitarlos para evitar que el Garbage Collector borre cosas que los 
+.show() vayan creando en memoria RAM y que solo se ejecute la cadena de procesos y se llame con el action que lo guarde en 
+disco duro. En una palabra muy simple, no debe haber .show()s en el entorno productivo. Pero esto se presta muchos problemas. 
+No porque sea difícil, sino porque probablemente en tu script tengas, por ejemplo, 1000 sentencias de procesamiento, porque 
+es un script largo y vas a cometer en algún momento algún error al momento de sacar un .show(), entonces ¿qué se hace? Vamos 
+al laboratorio 17 y vamos a construir una función utilitaria para sacar esos .show()s de manera automática y de esta manera 
+pues no tienes que borrar nada en el script.
+
+
+CHECKPOINT (Laboratorio 018)
+============================
+
+Ahora vamos al patrón de diseño Checkpoint, que es uno de los más usados. Hablemos nuevamente de la etapa de desarrollo, que 
+es donde generalmente ocurren los problemas, y esto en cierto modo es bueno. Recuerden que todos estos problemas deben suceder 
+en la etapa de desarrollo para solucionarlos y ya en producción, pues no debe pasar nada. ¿Qué otro problema vas a tener?. Aquí 
+está el 100% de la potencia del clúster y esta es tu área de trabajo y empiezas a programar, creamos el Dataframe 1, el 
+Dataframe 2, paso 3, paso 4 y paso 5 y estás usando memoria RAM, y de pronto se llenó tu zona de trabajo. Tratas de crear el 
+paso 20 y ya no tienes espacio en memoria RAM para crear ese Dataframe 20. ¿Qué va a suceder? pues como se te acabó la memoria 
+RAM, vas a obtener el error de Memory Overhead. ¿Cómo podríamos solucionar esto? Pues simplemente aumentamos la reserva de nuestra 
+potencia, pero recuerda que en este clúster están trabajando otros desarrolladores. Esto implicaría que interrumpes su trabajo. 
+La otra alternativa es aumentar la potencia del clúster, de esta manera, tu 10% ya no son 100 GB, digamos que eran 10 servidores, 
+ahora son 20, ahora tus 10% significan 200 GB de RAM y tienes más espacio para trabajar. Pero esto implica costos que 
+necesariamente el proyecto en donde tú estás trabajando no te lo va a habilitar, te dice: “oye, no hay presupuesto, 
+arréglatelas ...” 
+
+¿Qué hacemos en el caso en que no podemos reservar más espacio de trabajo y no podemos aumentar la potencia del clúster? 
+
+Para este caso hay que crear puntos de liberación de memoria RAM cada cierta cantidad de pasos. Por ejemplo, esta es tu zona de 
+trabajo, este es el Dataframe 1, el Dataframe 2, el Dataframe 3 y hasta el Dataframe 10. Y supongamos que necesitas 20 pasos de 
+procesamiento. Ya se llenó. Lo que haremos es forzar la ejecución de toda la cadena de procesos para calcular el Dataframe 10. 
+Esto lo hacemos con la función save(). Mandamos a almacenar Dataframe 10 en un archivo en disco duro y liberamos todo en la 
+memoria para que quede vacía. Luego leemos el archivo que tiene almacenado la información en disco duro para volver a colocar en 
+la memoria RAM al Dataframe 10 y seguimos calculando así el Dataframe 11, Dataframe 12, y así hasta el Dataframe 20 y supongamos 
+que son 30 pasos que tienes que ejecutar. Creamos otro punto de Checkpoint. Guardamos por un momento el Dataframe 20, liberamos 
+la memoria RAM de nuestra sesión, recuperamos el archivo del Dataframe 20  nuevamente en un Dataframe y seguimos procesando. Vean 
+que en teoría, gracias a este patrón de diseño, Checkpoint, se le llama Checkpoint, porque esto se le conoce como un punto de 
+salvado. En teoría, pues tu proceso puede tener todos los pasos que tú gustes. La lógica es simple, cuando llegues a un punto en 
+donde la memoria RAM se desborda, guarda ese Dataframe en un archivo, borra la memoria RAM que hayas usado, recupera tu Dataframe 
+del archivo y sigue procesado. 
+
+Desventajas del Checkpoint
+
+La desventaja que tiene el patrón de diseño Checkpoint es que implica almacenamiento en disco duro temporal y el disco duro es 10 
+veces más lento que la memoria RAM al momento de almacenar. Entonces esa parte de tu cálculo va a ir algo lenta, pero bueno, no 
+hay de otra si no hay suficiente memoria RAM, tendremos que ir guardando al disco duro. Entonces habrá un poco más de lentitud, 
+pero no habrá desbordamiento de memoria RAM. Por lo tanto, en la desventaja del checkpoint, que agrega tiempo de liberación y tiempo 
+de lectura y escritura de disco duro. 
+
+Función .unpersist()
+
+Para borrar toda la cadena de proceso llamo el Dataframe que en el cual he creado el Checkpoint, al cual podemos asignarle la 
+función unpersist() que libera la cadena de proceso, que libera los Dataframes que se crean en la cadena de procesos, los 20 a los 
+30 o los que se hayan creado anterior a ese Dataframe. El problema es que la función unpersist(), es asíncrona esto que significa, 
+acá, por ejemplo, le dio un CTRL + Enter y tomó 0.5 segundos, pero eso no significa que la memoria RAM se haya liberado. Al llamar 
+al unpersist() lo que hemos hecho es que todos los Dataframes anteriores están marcados para que el Garbage Collector los borre, 
+¿Cuándo? pues cuando el Garbage Collector decida, puede ser que lo haga en 1 minuto, como puede que ser que lo haga dentro de 
+2 horas, eso no lo controlamos. Vamos a forzar a que se borre en este momento. Para eso dentro de la función unpersist() hay un 
+parámetro llamado “blocking”, el cual deberemos de colocar en “True”, eso fuerza, bloquea la ejecución, fuerza que el Garbage 
+Collector  vaya a la cadena de procesos y borre todo. Y eso pues se tomará, pues depende de 5 a 10 minutos la liberación de la 
+memoria RAM. Y listo ahora si ya tenemos controlado, ya el Garbage Collector no decide cuando borrar, estamos forzando a que se 
+borre en ese momento. 
+
+Con esto ya guardamos el Dataframe previo al colapso de memoria RAM y liberamos toda la cadena de procesos, incluyendo al 
+Dataframe 2. No existe nada en la memoria RAM en este momento. Ahora voy a volver a crear el Dataframe 2 leyendo el archivo de 
+datos. Vamos a leer un archivo que está en formato parquet desde el directorio “carpeta”. Y listo, ya está cargado nuevamente en 
+la memoria RAM. Ya no hay nada en la RAM, salvo el Dataframe 2 que volvimos a crear. Y le voy a hacer igual un .show() para que 
+vean que se pudo recuperar. Y bueno, ahí está, funciona. Y ya podríamos empezar a seguirlo y luego el paso 3, 4 y 5, y así 
+sucesivamente.
+
+
+CACHE (Laboratorio 019)
+=======================
+
+Desde un punto de vista de implementación, este va a ser el más fácil de codificar. Básicamente es llamar a una función. De hecho 
+Spark ya lo implementa. Pero hay que entenderlo conceptualmente para saber dónde se coloca ese punto de optimización. El patrón de 
+diseño Caché está orientado a evitar reprocesos, ¿pero esto qué significa? Y vamos a ponerlo con un ejemplo simple. Digamos que acá 
+tenemos el Dataframe 1 que crea el Dataframe 2, que crea el Dataframe 3,  que crea el Dataframe 4 y desde el Dataframe 4 se crea 
+el Dataframe A, el Dataframe B, el Dataframe C y este es el Dataframe que se guarda como Reporte. De el Dataframe 4 también se 
+crea el Dataframe X, que crea el Dataframe Y, que crea el Dataframe Z, que es otro reporte, se parece mucho a lo que habíamos 
+dejado en los ejercicios y también desde el Dataframe 4 se crea el Dataframe P, que crea el Dataframe Q, que crea el Dataframe R, 
+que es un tercer reporte que negocio nos ha pedido. Vean que hay un punto compartido. Tenemos una cadena de procesos principal de 
+la cual salen otras subcadenas de procesamiento. Es perfectamente normal, de hecho esto lo hemos visto en los ejercicios. ¿Pero 
+cuál es el problema a nivel de ejecución? Supongamos que crear esta cadena de procesos toma mucho tiempo 4 horas. Y la primera 
+ejecución de esta parte toma solo 10 minutos. La segunda ejecución también es muy rápida, toma 10 minutos y la tercera ejecución 
+también 10 minutos en total. ¿Cuánto debería tomar el proceso? 4 horas con 30 minutos. 
+
+                                            10 minutos
+              4 horas           _____ dfA --> dfB --> dfC	--> reporte guardado
+			                   |	        10 minutos		
+df1 --> df2 --> df3 --> df4 ---|------ dfX --> dfY --> dfZ  --> reporte guardado	
+		                       |            10 minutos
+                               |_____dfP --> dfQ --> dfR --> reporte guardado			
+
+
+Pero nuevamente recordemos que hay que controlar el Garbage Collector, que es lo que causa problemas en la memoria RAM. ¿Qué es 
+lo que podría pasar? Si no estás controlando el Garbage Collector podría ir borrandonos cada subproceso y re ejecutaría cada uno 
+nuevamente, sumando en total 12 horas con 30 minutos de proceso. Esto también es otro de los problemas recurrentes que sucede en 
+Spark, cuando hay cadenas de procesamiento compartidas. Que visualmente es lo que hemos estado haciendo en el ejercicio. ¿Cómo lo 
+evitamos? La lógica es simple. El Dataframe 4 va a ser compartido por otras cadenas de procesamiento, entonces solo debe calcularse 
+una vez, hay que marcarlo para que cuando se calcule el Garbage Collector no lo borre. Es decir, hay que ponerlo en la marca de 
+caché. Va a estar cacheado en la memoria RAM, o sea, permanentemente ahí. El Garbage Collector no lo va a eliminar hasta que el 
+proceso finalice. O sea, le damos al botón y el script ejecuta todo, el proceso, finaliza y listo, ya se guardó todo lo que había 
+que guardar. Entonces, así, el Garbage Collector dice, ok, ahora sí te puedo borrar. El Dataframe 4 estaría marcado para no ser 
+borrado nunca hasta que el proceso finalice. ¿Cuál es la lógica? Cuando de un Dataframe como mínimo haya dos cadenas de 
+procesamientos que dependan de ese Dataframe  automáticamente hay que colocarlo en la caché. La primera vez se tomará sus 4 horas 
+con 10 minutos. Viene el Garbage Collector borra todo el primer subproceso, pero dejará el Dataframe 4 en caché. Y así 
+sucesivamente. El proceso finaliza y ahora el Garbage Collector borra el Dataframe 4.
+                                                                            
+                       _____ reporte guardado 
+			          |	                 		
+               df4 ---|------ dfX --> dfY --> dfZ  --> reporte guardado
+		              |                      
+                      |_____ dfP --> dfQ --> dfR  --> reporte guardado	
+
+
+                       _____ reporte guardado 
+			          |	                 		
+               df4 ---|------ reporte guardado	
+                      |                      
+                      |_____ dfP --> dfQ --> dfR --> reporte guardado	
+
+
+                       _____ reporte guardado 
+			          |	                 		
+               df4 ---|------ reporte guardado	
+		              |                      
+                      |_____ reporte guardado	
+
+                       _____ reporte guardado 
+			          |	                 		
+                      |------ reporte guardado	
+		              |                      
+                      |_____ reporte guardado
+
+¿Cuánto tomaría este proceso? 4 horas con 30 minutos. De esta manera nos estamos ahorrando 8 horas de procesamiento, por eso es 
+que en ocasiones, probablemente si has trabajado en Spark, estos comportamientos de que a veces tu script toma 1 hora, a veces 
+7 horas, a veces nunca acaba, a veces la memoria RAM se acumula, entonces vean que todo se está relacionado a tomar el uso de 
+memoria RAM y el Garbage Collector. 
+
+
+REPARTITION y COALESCE (Laboratorio 020)
+========================================
+
+Un Dataframe físicamente hablando, está distribuido en un clúster. No necesariamente un Dataframe, vive solo en un servidor. 
+Podría ser que este servidor esté usado en un 80%, entonces, una parte del Dataframe se pone aquí. Otro servidor está más libre, 
+esta a un 50% de su uso por otros desarrolladores, entonces solamente el Dataframe está particionado en dos servidores. Como que 
+podría darse un caso un poco más extremo, digamos que todo está ocupado al 90% y Spark decide distribuirlo en 5 servidores diferentes. 
+En ese caso tendría 5 particiones. Físicamente hablando, los Dataframes están particionados. ¿De qué depende esto? Básicamente de la 
+suerte, de qué tan libre está el clúster en ese momento, así como el Garbage Collector es algo que es incontrolable y con estos 
+patrones de diseño lo hemos controlado, lo mismo va a pasar con las particiones. Cada partición de un Dataframe, en esencia, debe 
+de tener 100.000 registros. Eso significa que si tu Dataframe tiene 1.000.000 de registros, pues el número ideal de particiones 
+serían 10, cada una de 100.000 registros. Pero ese número ideal nunca es colocado, ya que depende de cómo está el clúster en ese 
+momento. A veces tal vez se coloquen 2, a veces, tal vez 5. Por lo tanto, hay que saber cómo reparticionar para tener el número ideal. 
+De esta manera, pues el procesamiento va a ser mucho más rápido, ya que digamos que tienes dos particiones para tu Dataframe implicaría 
+que tienes 500.000 registros en una partición y otros 500.000 registros en otra partición. Entonces el nivel de paralelización, digamos 
+nosotros hemos puesto por 100, no se va a obtener. Entonces aquí hay un poco más de detalle del cual tenemos que hablar. Desde un punto 
+de vista de código, va a ser muy simple. Siempre hay que dividir cuántas particiones crear, el número de elementos que tenga el Dataframe 
+dividido entre 100.000 y ese es el número de particiones ideal y llamamos a una función de repartición. Pero hay que entender que implica 
+por detrás de el clúster. Lo otro que hay que saber es la optimización de los procesos de cruce de datos, ya que los cruces de datos son 
+computacionalmente en los procesos más pesados en temas no analíticos, en la analítica, por ejemplo, lo más pesado es la red neuronal. 
+Pero no todo el día vas a estar siendo redes neuronales, generalmente vas a estar haciendo procesos de data engineer, no de data science, 
+en los procesos de data engineer computacionalmente son más pesados, son los cruces de datos los joints, así que también hay que saber 
+cómo se optimiza. 
+
+Vamos a continuar. Vamos ahora a entender el concepto de reparticionamiento. Ya tenemos una idea general de que implica que un Dataframe 
+este particionado. En síntesis, tampoco es tan complejo. Va a depender de cómo el clúster esté siendo usado en ese momento. Lo importante 
+es entender que el Dataframe, quizás solo tenga dos particiones, al día siguiente cuando lo ejecutas ahora el Dataframe quizá tenga 7 
+particiones. Al día siguiente, tal vez tengas más suerte y Dataframe se particiones en 10 veces. Ahora, el día siguiente, 3 veces, entonces, 
+vean que estas cosas no la podemos controlar nosotros porque depende de qué tan libre esté el clúster y depende de muchas cosas, literalmente, 
+hasta de la suerte, es decir, el Garbage Collector está liberando cosas en algún servidor, etc. El problema con esto es que no necesariamente 
+es el número de particiones ideales. Un Dataframe al final es un conjunto de muchos registros. Spark recomienda que en una partición vivan 
+100.000 registros, así que, ¿cuál es el número ideal de un Dataframe? Habría que hacer un conteo de registros. Si un Dataframe tiene 1.000.000 
+de registros y debe de haber 100.000 registros en cada partición, pues eso significaría que el número ideal de particiones para este Dataframe 
+sería de 10, eso sería lo ideal. Pero aquí no lo controlamos, así que lo que vamos a hacer es forzar a que sea 10 particiones. También hay que 
+entender lo siguiente. Supongamos que el día de hoy son 8 particiones. El número ideal es 10. Cuando tu leas el Dataframe, Spark lo va a colocar 
+como crea, eso es inevitable, pero lo que sí podemos hacer es colocar el número correcto. Pero hay que entender bien cómo se va a hacer esa 
+colocación. Digamos que al día siguiente Spark decide colocarlo en 12 particiones al momento en que tú lo lees. Ok, la lógica es la misma, el 
+número ideal es 10, así que no varía. 
+
+
+Repartition y Coalesce
+
+Hay dos funciones que hacen lo mismo, reparticionan el Dataframe. Pero una está optimizada para reparticionar hacia arriba, es decir, si quieres 
+aumentar particiones, ejecuta esta función que está optimizada para aumentar particiones. Por otro lado, podría ser que quieras disminuir el 
+número de particiones, en ese caso usaremos otra función que está optimizada para la disminución del número de particiones. Si yo utilizo esta 
+función, aquí lo va a hacer bien, pero no tan bien como si hubiese utilizado esta función, entonces, para aumentar particiones hay una función, 
+para disminuir particiones hay otra función. 
+
+¿En qué caso cuál vamos a usar? 
+
+Aquí depende. Digamos que inicialmente tenía 5 particiones y ahora lo estamos llevando a 3 particiones. Estamos disminuyendo el número de 
+particiones. También podría ser el caso, como nos sucedió, solo eran dos particiones y el número de reparticiones que necesitábamos era de 3. 
+Entonces aquí tenemos que aumentar las particiones. Si estamos disminuyendo el número de particiones la función optimizada es COALESCE. Si estamos 
+aumentando el número de particiones, la función optimizada es REPARTITION. 
+
+
+Tunning de JOINS (Laboratorio 021)
+==================================
+
+¿Cómo funcionan los joints, los cruces de datos? ya saben que los Dataframes están particionados en diferentes servidores y ya hemos colocado un 
+número ideal de particiones. Supongamos que tenemos dos Dataframes y vamos a poner un escenario ideal para que el ejemplo se entienda. Solo tenemos 
+6 servidores en el Clúster y el Dataframe 1 vive en los 3 primeros servidores y el Dataframe dos eran dos particiones, viven en el servidor 4 y 5. 
+Ahora, hagamos el cruce de datos. ¿Cómo se hace el cruce de dos Dataframes? vamos a cruzar el Dataframe 1 con el Dataframe 2, pero desde un punto 
+de vista de la infraestructura sería lo siguiente. Se cruzaría:
+
+                                                    https://i.postimg.cc/YCbwGvVg/s5.png
+
+
+Ahora vamos con otra parte del Dataframe, se cruzaría: 
+
+                                                    https://i.postimg.cc/J7ZV36vR/s6.png
+
+
+Y de esta manera hemos hecho el cruce de datos, al menos de manera distribuida por cómo pasa por detrás en la infraestructura. Pero seamos más 
+técnicos. Para hacer este cruce con estas dos partes del Dataframe 1 y el Dataframe 2: 
+
+                                                    https://i.postimg.cc/ZKxG29Jg/s7.png
+
+físicamente tienen que estar en la misma máquina. A través de la interfaz de red que tenga el clúster, recordemos que en un clúster todo esto está 
+conectado al switch por medio de cables UTP. Entonces esta parte de los datos (el Dataframe 2 del Servidor 4) se va a mover por la red y se va a 
+mover de manera temporal a este servidor (al Servidor 1) para poder hacer el cruce. Igual con el resto. De servidores para hacer este cruce se 
+mueve. Esta parte aquí y se hace el cruce. Y esto toma tiempo. Para hacerla el cruce con la otra parte del Dataframe, pues lo mismo se tiene que 
+mover de manera temporal aquí y eso toma tiempo. Entonces hay un tiempo de transferencia de red. Como forzosamente va a haber un tiempo de 
+transferencia de red, vamos a comprimir lo que se va a mover en un 80%. Ya sabemos que se utiliza por estándar el compresor snappy, de esta manera, 
+antes de mover la información, se comprime. Si por ejemplo se van a mover 100 GB de datos, antes de moverlo por la red, lo comprimimos y ahora 
+solamente se van a mover 20 GB, lo cual haría que el movimiento se haga 5 veces más rápido, si van a tomar 10 minutos, ahora solo tomará 2 minutos. 
+Ya tenemos optimizado esos movimientos que van a ver a través de la interfaz de red. Por lo tanto, hay que comprimir los datos que se muevan a 
+través de la interfaz de red y para eso tenemos esta primera variable.
+
+                                        config("spark.sql.inMemoryColumnarStorage.compressed", "true")
+
+
+El almacenamiento columnar en memoria RAM que se haga por estos movimientos se va a comprimir. ¿De esta manera, cuál es el compresor? Pues el único 
+compresor que aplica Spark sobre memoria RAM es snappy, no acepta otros, que ya está optimizado para entornos de Big Data. Ahí tenemos la primera 
+variable activada y ya nos vamos a ahorrar tiempo de transferencia de red. 
+
+Ahora vamos a entender esta segunda variable. Las variables de tipo BROADCAST. En ocasiones puede que tengas mucha suerte y el clúster está 
+disponible en ese momento. Digamos que del 100% de la potencia del clúster tú estás trabajando solo un 10%, es lo que tienes reservado. Y hay un 
+90% libre y nadie lo está usando. Así que, ¿qué es lo que podríamos hacer? Si se dan cuenta, estos movimientos son temporales, lo que se está 
+moviendo se mueve comprimido, se descomprime y listo. Solo se hace de manera temporal, una vez que se haga el cruce. Pero si hay espacio libre en 
+el clúster, podríamos hacer lo siguiente: que esta variable, este Dataframe, el Dataframe 2,  que generalmente es el más pequeño de los dos con los 
+que haces el cruce, viva previamente en todos los servidores de los otros Dataframes que estamos usando. ¿Eso que significa? que el movimiento se 
+hace la primera vez, pero no se borra de memoria RAM por si más adelante quizá haya otro Dataframe, un tercer Dataframe que también vaya a ser un 
+cruce con el Dataframe 2. Ya no hay que moverlo, ya vive ahí, directamente se hace el cruce. En ese caso a estas particiones que se mueven la 
+primera vez a los servidores para hacer el cruce y no se borran de esos servidores, se les conoce como Dataframes Broadcast. Previamente ya viven 
+en todos los servidores en donde hay Dataframe para hacer el cruce de datos. El movimiento solo se hace una vez. En este caso. ¿Cómo se convierte 
+un Dataframe para que sea del tipo broadcast? Para eso tenemos estas dos variables. 
+
+                                                config("spark.sql.broadcastTimeout", "300")
+
+
+Con la primera hay que definir un tiempo de broadcast. ¿Por qué? Podría darse el caso que sean variables muy pesadas. Lo cual haría que ocupe mucha 
+memoria RAM del servidor. Eso potencialmente es un problema. ¿Cómo podemos asegurarnos de que estas particiones que estamos moviendo no sean muy 
+pesadas para que no ocupen mucha potencia de almacenamiento en el servidor, en memoria RAM? pues podemos medirlo en función de que tan rápido se 
+transfiere. Por ejemplo, cualquier cosa que pueda transferirse en 300 segundos o menos, vamos a hacer que sea un broadcast que viva ahí de manera 
+permanente y no se borre. Pero digamos que al momento de transferir esto se demora 3.000 segundos antes de hacer el cruce de datos, incluso aunque 
+esté comprimido. Entonces, pues es una partición muy grande, está ocupando mucha memoria RAM en el servidor y va a estar ocupando RAM por las puras 
+y sería demasiado grande una partición que se haya tomado mucho tiempo en colocarse en el servidor en donde se hará el cruce. Hay un estándar que 
+define como tiempo máximo de movimiento 5 minutos, o sea 300 segundos. Si la partición puede moverse en 300 segundos o menos, automáticamente se 
+convierte en una partición de tipo Broadcast. Se va a quedar ahí hasta que la sesión termine, por si en algún momento otro Dataframe tiene que 
+hacer el cruce de datos, pues ya está ahí, ya no se borra. Por otro lado, si esto toma más de 300 segundos en moverse, eso es temporal. Se hace el 
+cruce y se borra de manera automática luego de hacer ese cruce. Eso se configura aquí. Cuánto tiempo tenemos que esperar para que la variable se 
+convierta en BROADCAST, si logra moverse en 300 segundos o menos, se va a convertir en un Broadcast. 
+
+Y adicionalmente hay otra variable que también define cuando una partición, se convierte en broadcast. 
+
+                                        config("spark.sql.autoBroadcastJoinThreshold", "50000000")
+
+
+En este caso está en función de la memoria RAM que utiliza, no solo vamos a medir cuánto tiempo se demora en transferirse, sino tal vez tienes 
+suerte y la red está libre en ese momento y estamos viendo 10 GB de datos y se transfieren muy rápido, se transfieren en 100 segundos. ¿Entonces 
+10 GB es mucho o poco? Para que queden ahí permanentemente siendo ocupados, es una propuesta muy relativa, no depende de cuánta memoria RAM tu 
+hayas reservado. Así que para eso se utiliza la memoria de emergencia, ahí es donde vamos a colocar estas particiones de tipo Broadcast, que es 
+una memoria que se activa por si hay colapsos, entonces ahí estamos usando parte de la memoria principal del procesamiento. Por eso se coloca mismo 
+numerito acá esta es la variable que define el área de memoria RAM para que vivan las particiones del tipo broadcast. ¿Cuánto es? Pues lo mismo 
+que el área de memoryOverhead, literalmente es la misma área de memoria RAM. El número que se coloca aquí está en bytes.  ¿Entonces que números se 
+coloca? tenemos hasta 500 megabytes, entonces ahí dice 500 megabytes pero indicados en bytes (50000000 bytes). Si esto estuviera con la letra g, 
+entonces tendrían que ser 6 ceros en total. Para efectos prácticos, la regla es la siguiente: si memoryOverhead está con la letra m, en nuestro 
+caso 500m, se copia el mismo número y se le agregan 5 ceros. Si esto está con la letra g, se copia el mismo número y se le agregan 6 ceros. Y 
+listo, ya tenemos el área reservada de memoria RAM, que es el 10% del área total, que sería el overhead que es la zona de memoria RAM de 
+emergencia. Ahí vivirán las particiones de tipo Broadcast. Y con esto ya tenemos optimizado el cruce de datos, vean que esta optimización es muy 
+diferente al mundo de las bases de datos clásicas, en donde por ejemplo, la tabla de mayor tamaño se ponía al lado izquierdo o derecho y la otra 
+de menor tamaño a la derecha. Entonces de esto y es un mundo completamente diferente, ya que estamos trabajando en un clúster. 
+
+Para que esta optimización funcione de los joints, previamente, los Dataframes tienen que tener el número ideal de partición. Por ejemplo, si yo 
+no he hecho esto esto de reparticiones, este Join no va a funcionar bien, así que el requisito previo es esto del número ideal de particiones. 
+
