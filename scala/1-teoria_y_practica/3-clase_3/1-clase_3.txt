@@ -8,7 +8,7 @@ funciones estándar que trae Spark. Existen 2 tipos de funciones en Spark:
 -	Transformations
 -	Actions 
 
-Los “transformation” definen pasos de procesamiento, pero no procesan, por otro lado, los “actions” llaman a ejecutar el 
+Los "transformation" definen pasos de procesamiento, pero no procesan, por otro lado, los "actions" llaman a ejecutar el 
 proceso que tú hayas definido. Vamos a entender esto mucho mejor mientras vayamos codificando. Luego de haber entendido 
 ese concepto, vamos a aprender lo que implica el encadenamiento de procesos, estos transformation nos van a ayudar a 
 implementar lógicas funcionales, es decir, utilizar funciones utilitarias que nos permiten implementar pasos de procesamiento, 
@@ -31,7 +31,7 @@ directorio y dentro de ese directorio se encontrará el archivo con el reporte q
 una escritura existen 2 formatos de escritura: 
 
 -	Los formatos de texto plano que son los tipos de archivos que hemos estado viendo hasta el momento, por ejemplo, el archivo 
-    “persona.data”, lo podemos abrir con un editor de texto y vemos su contenido, tenía ciertos campos y registros, era legible, 
+    "persona.data", lo podemos abrir con un editor de texto y vemos su contenido, tenía ciertos campos y registros, era legible, 
     por eso es de texto plano. 
 
 -	Pero también existen otros archivos en formatos binarios, por ejemplo, el formato de almacenamiento en PARQUET o el formato 
@@ -88,7 +88,7 @@ más básico de lo básico. Por ejemplo:
     de código. Una vez que tenemos esos reportes, hacemos el almacenamiento en archivos y esto es lo que ya negocio se llevaría. 
 
 SE LE LLAMA UN ARQUETIPO PORQUE MUESTRA LOS PASOS DE PROCESAMIENTO, primero leer, luego limpiar, luego cruzar los datos, estos 
-cruces de datos tienen un nombre técnico conocido como “tablones”, por ahora, las resultantes de cruces se van a llamar “tablones”. 
+cruces de datos tienen un nombre técnico conocido como "tablones", por ahora, las resultantes de cruces se van a llamar "tablones". 
 La próxima semana que veamos el arquetipo completo esto se va a aclarar un poco más. Una vez que tenemos pre-procesada la 
 información en tablones, ahora sí viene el procesamiento propiamente dicho, el cual puede ser desde un pequeño reporte, como haremos 
 el día de hoy, hasta algo más complejo como una red neuronal. Aquí es donde viene la parte de ya procesarlo, lo que negocio en si 
@@ -101,7 +101,7 @@ optimización y ya desde la subsiguiente ahí veremos las optimizaciones más av
 ir entendiendo cómo es que todas las sentencias que ejecutemos van a afectar a la memoria RAM. En el mundo de Spark hay 2 tipos de 
 funciones: 
 
--	Las funciones estánda
+-	Las funciones estándar
 -	Las funciones personalizadas conocidas como UDF, en español significa funciones definidas por el usuario o user definition 
     functions. 
 -	
@@ -157,8 +157,8 @@ cluster es limitada, eso quiere decir que en algún momento se va a acabar.
 ----------------------------------------------- 
 
 Pues simplemente ya no vas a poder crear dataframes y nos va a salir un error que es uno de los que más obtienen al 
-programar en Spark conocido como el MEMORY OVERHEAD, que en español podríamos traducirlo como “Desbordamiento de memoria 
-RAM” o en términos más simples pues se te acabó la RAM porque creaste muchos dataframes y ya no hay más espacio. ¿Esto que 
+programar en Spark conocido como el MEMORY OVERHEAD, que en español podríamos traducirlo como "Desbordamiento de memoria 
+RAM" o en términos más simples pues se te acabó la RAM porque creaste muchos dataframes y ya no hay más espacio. ¿Esto que 
 implica a nivel de desarrollo? hablemos nuevamente en un escenario de la vida real, recuerda que en una empresa, aquí está 
 el cluster de desarrollo, se tiene un 100% de la potencia del cluster, hablemos solo de la RAM, digamos que tiene 1.000 GB 
 de memoria RAM, pero recuerda que tú no eres el único desarrollador que va a estar trabajando en el cluster, va a haber todo 
@@ -167,7 +167,7 @@ cierta potencia del cluster, no tenemos el 100% de la potencia del cluster, tend
 trabajarás para no interrumpir el resto que está trabajando. Lo segundo, cuando empiezas a trabajar vas a ir creando 
 dataframes para implementar el proceso que negocio te haya pedido, mientras más pasos tenga tu proceso, más dataframes vas 
 a necesitar y por lo tanto más memoria RAM vas a requerir. Tal vez si negocio te ha pedido procesar muchos pasos llegue un 
-punto en que tu zona de memoria RAM se va a llenar y por lo tanto tendrás el error de “Memory Overhead” (desbordamiento de 
+punto en que tu zona de memoria RAM se va a llenar y por lo tanto tendrás el error de "Memory Overhead" (desbordamiento de 
 memoria RAM) o simplemente pues se te acabó tu área de trabajo. 
 
 
@@ -187,8 +187,8 @@ NUBE PODEMOS CREAR UN CLÚSTER ELÁSTICO. Por ejemplo, digamos que tenemos 10 se
 servidores para tener 2.000 GB de RAM y de esa manera todos ahora tenemos un área de trabajo mucho mayor y yo puedo seguir 
 trabajando. Técnicamente es mover unos parámetros en la consola nube en AZURE o en AWS, en donde estemos trabajando, 
 entonces, se puede hacer, pero nuevamente hablemos de escenarios reales en las empresas, eso implica presupuesto y lo más 
-probable es que el encargado del presupuesto te diga: “ … oye esto está duplicando el presupuesto, de 10 servidores a 20 
-servidores, no hay dinero, simplemente no hay dinero para aumentar la potencia del clúster … “. Entonces, eso también puede 
+probable es que el encargado del presupuesto te diga: " … oye esto está duplicando el presupuesto, de 10 servidores a 20 
+servidores, no hay dinero, simplemente no hay dinero para aumentar la potencia del clúster … ". Entonces, eso también puede 
 pasar. 
 
 Si no puedes quitar área de trabajo a otra persona y no puedes aumentar la potencia del clúster, ¿qué es lo que debes de 
@@ -226,7 +226,7 @@ interesa que son procesos orientados a big data. ¿Qué es esto del GARBAGE COLL
 hace el GARBAGE COLLECTOR es liberar zonas de memoria RAM que ya fueron creadas por alguna acción (algún Action). Recordemos 
 que en Spark lo que se va a acabar es la memoria RAM, ese es el recurso más preciado en Spark, mientras más dataframes 
 necesites para desarrollar, pues se va a llenar la memoria RAM, por no tanto, el GARBAGE COLLECTOR ¿qué es lo que hace? si ya 
-hay un dataframe que fue llamado por un Action, por ejemplo, el “show”, ya tenemos la resultante y lo capturamos en pantalla y 
+hay un dataframe que fue llamado por un Action, por ejemplo, el "show", ya tenemos la resultante y lo capturamos en pantalla y 
 lo llevamos a una PPT y listo, entonces, ya no necesitamos al dataframe. EL GARBAGE COLLECTOR LO QUE HACE ES QUE CUALQUIER 
 DATAFRAME QUE YA HAYA SIDO CREADO POR UN ACTION, LO BORRA Y BIEN LO DETECTA, LO BORRA. 
 
@@ -234,18 +234,18 @@ DATAFRAME QUE YA HAYA SIDO CREADO POR UN ACTION, LO BORRA Y BIEN LO DETECTA, LO 
 ¿Pero como funciona?
 -------------------- 
 
-Lo hace de la siguiente manera, digamos que aquí tienes el dataframe “dfPersona” que leíste desde un archivo de disco duro, acá 
-tienes el Transformation “filter” en donde aún no le das CTRL + Enter al “show”, simplemente definiste el ‘filter’ para filtrar 
-por el campo ‘edad’ y se crea el dataframe pero aún no existe. Solamente lo hemos definido, aún no hemos llamado a la acción 
-que lo crea. Supongamos también que este dataframe ‘persona’ tiene 100.000.000 de registros, ahora mandamos a ejecutar al ‘df1’ 
-dándole un “.show” y ahora sí se va a crear en la memoria RAM, ¿cuánto tiempo le va a tomar al proceso filtrar 100.000.000 de 
-registros? Digamos que este proceso es muy largo y toma 1 hora en que el dataframe ‘df1’ se cree en la memoria RAM, esperamos 
-1 hora y listo ya tenemos el ‘df1’ en la memoria RAM. Tendríamos lo siguiente, todo esto es el cluster y en la memoria RAM del 
-clúster tenemos el dataframe ‘dfPersona’ y después de 1 hora tenemos el dataframe ‘df1’, esperamos 5 minutos y le vuelvo a 
-hacer un “.show” al dataframe ‘df1’, ya no tengo que esperar nuevamente 1 hora que el dataframe cree, porque, ya se creó, así 
+Lo hace de la siguiente manera, digamos que aquí tienes el dataframe "dfPersona" que leíste desde un archivo de disco duro, acá 
+tienes el Transformation "filter" en donde aún no le das CTRL + Enter al "show", simplemente definiste el 'filter' para filtrar 
+por el campo 'edad' y se crea el dataframe pero aún no existe. Solamente lo hemos definido, aún no hemos llamado a la acción 
+que lo crea. Supongamos también que este dataframe 'persona' tiene 100.000.000 de registros, ahora mandamos a ejecutar al 'df1' 
+dándole un ".show" y ahora sí se va a crear en la memoria RAM, ¿cuánto tiempo le va a tomar al proceso filtrar 100.000.000 de 
+registros? Digamos que este proceso es muy largo y toma 1 hora en que el dataframe 'df1' se cree en la memoria RAM, esperamos 
+1 hora y listo ya tenemos el 'df1' en la memoria RAM. Tendríamos lo siguiente, todo esto es el cluster y en la memoria RAM del 
+clúster tenemos el dataframe 'dfPersona' y después de 1 hora tenemos el dataframe 'df1', esperamos 5 minutos y le vuelvo a 
+hacer un ".show" al dataframe 'df1', ya no tengo que esperar nuevamente 1 hora que el dataframe cree, porque, ya se creó, así 
 que el Action no lo vuelve a crear, simplemente te muestra en un par de segundos, los 20 primeros registros que tenga el 
-dataframe, no tiene sentido volver a crearlo, lo creamos la primera vez. Pasan 5 minutos y le vuelvo a hacer un “.show” ya está 
-creado en memoria RAM así que solo te lo muestra. El Action solo lo crea la primera vez, entonces, el primer “.show” tomará 
+dataframe, no tiene sentido volver a crearlo, lo creamos la primera vez. Pasan 5 minutos y le vuelvo a hacer un ".show" ya está 
+creado en memoria RAM así que solo te lo muestra. El Action solo lo crea la primera vez, entonces, el primer ".show" tomará 
 1 hora, pero de ahí ya lo muestra directamente, porque ya existe en la RAM. Ahora entendamos lo del GARBAGE COLLECTOR. 
 
 El GARBAGE COLECTOR es el módulo que tiene Java que va liberando la memoria RAM de los dataframe que ya fueron creados con un 
