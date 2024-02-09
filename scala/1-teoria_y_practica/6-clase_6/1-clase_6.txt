@@ -1,0 +1,464 @@
+CLASE 6
+=======
+
+Habíamos llegado hasta el arquetipo de desarrollo avanzado, digamos que con esto ya tenemos los conocimientos para resolver 
+diferentes problemas que se nos puedan presentar en la empresa desde un punto de vista de la codificación. En resumen habíamos 
+visto un arquetipo de leer, modelar, aplicar reglas de calidad, construir tablones de procesamiento (procesar) y finalmente 
+escribir la resultante final. Partimos desde el sistema de archivos distribuidos, desde las fuentes de datos, habíamos dicho 
+que podíamos tener datos estructurados, como archivos CSV o datos semi estructurados como JSON y XML.  
+
+1. Lo primero era cargar las variables Dataframe.  
+
+2. Una vez que los tenemos, lo siguiente hay que procesar directamente los dataframe semiestructurados, ya sabemos que tiene 
+   una complejidad.  
+
+3. Luego, se aplica una etapa de modelamiento de la cual de un dataframe semiestructurado pueden salir 1 o varios dataframes 
+   estructurados.  
+
+4. Una vez que tenemos estructurada la información, ahora si aplicamos reglas de limpieza de datos, por ejemplo, la edad debe 
+   ser mayor a cero o no pueden haber montos de transacciones negativas o tal vez negocio acote la las transacciones que quiera 
+   procesar y solamente le interesan aquellas que sean mayores a cierta fecha. Se aplican esas reglas de calidad a los dataframes 
+   y listo ya tenemos los dataframes limpios para poder procesarlos.  
+
+5. Ahora viene el procesamiento, generalmente al procesar hacemos la construcción de tablones, hacemos cruces de datos entre los 
+   dataframes y al final tenemos un dataframe resultado. Estos tablones tienen como objetivo central en centralizar la información 
+   en un solo dataframe y va a depender siempre de la necesidad de negocio. Por ejemplo, si estamos hablando de reportes de 
+   transacciones debemos tener los datos de la persona que hizo la transacción, los datos de la empresa en donde se la transacción 
+   y los datos propios de la transacción, entonces deberíamos crear un tablón que contenga todos estos campos en función de los 
+   dataframes limpios. Dependiendo de la necesidad de negocio pues tal vez puedan salir más tablones. Un tablón es aquel dataframe 
+   que consolida la información que queremos procesar, una estructura que sea fácilmente procesada.  
+
+6. Luego de eso ahora sí procesamos, por ejemplo, un reporte de lo que ya negocio nos pida y tenemos las resultantes finales.  
+
+7. Por último, las escribimos en el sistema de archivos distribuidos y ahí finalizaría el proceso.  
+
+Adicionalmente, hablamos de técnicas de optimización respecto a todo el flujo que habíamos implementado. Por ejemplo, vimos el patrón 
+de diseño CHECKPOINT o el patrón de diseño CACHÉ o también optimizamos los cruces de dataframes, entonces, sobre todo este flujo ya 
+se aplican esas técnicas de optimización.  
+
+¿Cuál sería el siguiente paso? 
+------------------------------
+
+El día de hoy vamos a hablar de estos temas de infraestructura. Cuando tú vayas a una empresa a trabajar vamos a necesitar una 
+infraestructura y aquí solo hay dos posibilidades:  
+
+- La infraestructura es on-premise o  
+- La infraestructura es on-cloud  
+
+Es decir que la infraestructura sea on-premise significa que la empresa en donde tú estás pues en alguna de sus oficinas han comprado 
+10 servidores y están conectados todos a una misma red lan y listo, ya tienen el clúster con Spark y con alguna tecnología de notebooks 
+tu te vas a conectar esa cluster y vas a empezar a trabajar sobre ese clúster con todo lo que hemos aprendido, esa es una posibilidad.  
+
+Actualmente las empresas prefieren tener sus clusters en la nube, es decir, como lo hemos estado haciendo, sobre algún servicio en la 
+nube que puede ser AWS, AZURE o GCP desplegar ahí la infraestructura. De esta manera la infraestructura solo vive por el tiempo de 
+procesamiento, digamos que vamos a estar trabajando en el proyecto cuatro semanas y alquilamos un cluster en alguna de estas nubes por 
+cuatro semanas y va a estar encendido desde las 8:00 de la mañana hasta las 17:00 de la tarde. Entonces estos clusters en la nube son 
+ELÁSTICOS porque podemos crearlos, tenerlos encendidos de cierto tiempo a cierto tiempo y luego de las cuatro semanas pues destruimos 
+el clúster, ya que, ya tenemos el proceso. Entonces la gran mayoría de empresas por eso prefieren instanciar sus clases en nube ya que 
+sale mucho más barato. El día de hoy vamos a poner un ejemplo sobre la nube de azure aunque estos mismos conceptos pueden aplicarse 
+también sobre otras nubes. Voy a mostrarles cómo desplegar una infraestructura de clusters sobre el servicio de Azure.   
+
+¿Qué es lo que debes de conocer?  
+--------------------------------
+
+Realmente desde un punto de vista al menos de la programación de Spark y Scala, debes de conocer el montado del sistema de archivos 
+desde donde quieres trabajar. En el caso de Azrure tenemos como sistema de archivos, los CONTENEDORES. Entonces vamos a crear un contenedor 
+y dentro vamos a crear un directorio y dentro vamos a colocar un archivo, todo esto va a vivir en Azure. Ahora sobre Azure voy a crear un 
+clúster de Databricks ya de paga. El clúster de Databricks tiene un sistema de archivos, memoria RAM y núcleos de CPU. Lo que deberemos de 
+hacer es montar este contenedor de manera remota dentro de algún directorio del sistema de archivos de Databricks para que, de esta manera, 
+tenemos una conexión, cuando queramos leer los datos de este montado remoto pues ya estamos leyendo los datos desde el contenedor de Azure, 
+esa es la estrategia en general.  
+
+Digamos que estamos en otra nube como AWS, la lógica sería la misma, por ejemplo, en AWS el sistema de archivos es S3, sobre S3 creamos un 
+contenedor, dentro un directorio, subimos el archivo de datos y dentro del cluster de procesamiento hacemos el montado remoto de ese 
+contenedor en algún directorio de Databricks y de esta manera cuando leamos los datos pues estamos leyendo los datos que viven en el sistema 
+de archivos de AWS y lo mismo se aplica con Google cloud. Entonces, la idea es tener el sistema de archivos de la nube y hacer el montado 
+en el clúster.  
+
+Workspaces 
+----------
+
+Hay algunas otras cosas que saber, en una empresa por supuesto que hay varias areas y  también hay varios proyectos por área, entonces, 
+clásicamente se trabaja con Workspaces  y esto ¿a qué se refiere? Por ejemplo en empresas, digamos, que el área de Ventas, el área de Finanzas 
+y el área de Cobranzas va a trabajar con procesamiento en Spark, entonces, cada una de estas tres areas tiene su propio workspace de 
+Databricks, es un workspace independiente, porque los proyectos de Cobranza, pues, no pueden ver los proyectos de Finanzas, entonces, lo 
+primero en Databricks es crear un workspace. Esto no puede hacerse en una cuenta gratuita solo se puede hacer en una cuenta de pago. Una vez 
+que cada área de la empresa tenga su propio workspace independiente, ahora sí vamos a empezar a trabajar, digamos que Cobranza tiene cuatro 
+proyectos de Big Data, dentro del workspace cada uno tiene su propio clúster, aquí está el clúster 1 que es del proyecto 1, el clúster 2 y 
+el clúster 3 y así sucesivamente. Un workspace permite crear varios cluster, pero también recordemos que en Databricks tenemos un sistema de 
+archivos distribuido. Cada workspace tiene su sistema de archivos distribuidos independiente, su propio DBFS, Cobranzas tiene su sistema de 
+archivos distribuido en DBFS, Finanzas y Ventas, y dentro ya viven los clusters de los proyectos que apuntan todos a este sistema de archivos 
+distribuidos. Así es como se trabaja ya en un escenario empresarial real, workspace generalmente divididos por áreas de la empresa y clúster 
+para los proyectos que hay en cada área con un sistema de archivos único para cada workspace. Cuando queramos procesar datos, por ejemplo, de 
+Azure tenemos un contenedor en donde colocamos los datos que queremos procesar y se debe de hacer el montado remoto al sistema de archivos 
+del workspace en donde se va a hacer el proyecto para que el proyecto pueda leer los datos, procesarlos y escribirlos y, por lo tanto, se 
+escribe dentro de ese sistema de archivos. Vamos a ver cómo hacer todo esto, desde un punto de vista de desarrollo, digamos el arquitecto 
+generalmente es el que prepara los workspace y los clúster, nosotros estamos con rol de desarrollador, pero igual debemos de conocer de todos 
+estos pasos. A ti como desarrollador lo que te va importar es hacer el montado remoto y esto por supuesto se hace desde code. Todo lo que 
+les voy a explicar está en el documento S601, vamos a ver cómo utilizarlo y de paso aprenderemos a usar Azure.  
+
+ 
+Azure (S601. Laboratorio Databricks on Azure) 
+---------------------------------------------
+
+1 - Crear Grupo de recursos 
+---------------------------
+
+Lo primero que tenemos que hacer es entrar al portal de Azure. Por ejemplo, yo tengo mi cuenta de azure es una cuenta de pago y voy a poder 
+crear lo que necesite. Dentro de Azure los recursos que creemos van a vivir dentro de un GRUPO DE RECURSOS, por ejemplo, vamos a crear un 
+CONTENEDOR para subir los datos que queremos procesar. Vamos a crear un WORKSPACE de Databricks con su propio sistema de archivos DBFS y un 
+clúster de ejemplo. Entonces hay muchos recursos que se estarán creando en la nube, vamos a crear un grupo de recursos para ordenar todo lo 
+que vamos a desplegar dentro de este grupo de recursos pues vivirán todos los recursos que desplegemos. Desde el paso número 1.1 desde los 
+servicios que ofrece Azure acá tenemos lo de grupos de recursos, dentro se crean todos los recursos con los que tú quieras trabajar. Desde 
+el paso 1.3 voy a crear un grupo de recursos, deben de saber que Azure todo se maneja por suscripciones, básicamente una suscripción es una 
+tarjeta de crédito que tú hayas ingresado y a esa tarjeta se van a cargar los costos, entonces, se carga mi tarjeta de credito. ¿Cómo se va 
+a llamar el grupo de recursos? desde el paso 1.4, le voy a poner un nombre genérico y dentro empezaremos a crear todo. Luego viene el tema 
+de la región, cuando estamos trabajando en la nube la infraestructura que vamos a desplegar puede vivir en muchas regiones diferentes, al 
+hablar de la nube, por ejemplo, Azure tiene granjas de servidores en Estados Unidos, en Centroamérica, en Latinoamérica, también en Europa, 
+en Asia, en África y en Oceanía. Nosotros físicamente estamos aquí en Latinoamérica, entonces, nos conviene trabajar con las granjas de 
+servidores que hay aquí en Latinoamérica. ¿A qué se debe esto? el tema de latencia, recuerda que desde la empresa vas a subir, digamos, un 
+archivo de un terabyte de datos, digamos que subirlo dentro de Latinoamérica a la región de Brasil eso nos toma 1 hora, pudimos haber 
+creado los recursos en Estados Unidos pero ahí la latencia sería mayor y por lo tanto el tiempo de subida, digamos, sería de 1 hora y 
+30 minutos, 30 minutos más, por lo tanto, cuando estamos trabajando en la nube la infraestructura que vamos a desplegar debe de estar en 
+la región más cercana a nuestra ubicación. Lo ideal sería, por ejemplo, en Brasil sería el escenario ideal, sin embargo, el problema con 
+las regiones que están fuera de Estados Unidos es que son un poco más costosas, por ejemplo, digamos que quieres alquilar un servidor de 
+100 gigas de RAM. En alguna región de Estados Unidos digamos que sale a 1 dólar la hora ese servidor. Probablemente en Sudamérica nos va a 
+salir un 1.3 dólares o 1.2 dólares, un 20% a 30% más, esto se debe a que para Azure es más fácil gestionar sus servidores de Estados Unidos 
+que servidores fuera de Estados Unidos, ya que, Azure pues físicamente tiene su central general dentro de Estados Unidos, le es más fácil 
+gestionarlo, en cambio, en otras regiones pues le sale un poco más costoso. Por eso los costos son un poquito más altos. Si estás practicando 
+por tu cuenta para que no se te cobre tanto de tu tarjeta de crédito yo te recomiendo que despliegues todo en alguna región de Estados Unidos, 
+ya que, ahí los servidores están más baratos, pero en un escenario de una empresa real pues probablemente nos convendría un lugar más cercano 
+a nuestro país. Nosotros vamos a trabajar en la región centro sur de Estados Unidos, todos los recursos que creemos dentro del grupo de 
+recursos van a vivir físicamente en esta región. Desde el paso 1.4 le doy clic a “revisar y crear” me dice bien todo está bien configurado 
+y ahora sí le doy clic a “crear”, de ahí comenzará el despliegue del grupo de recursos, y dentro ya empezaremos a crear todos los recursos. 
+
+
+2 - Habilitar servicios de Databricks 
+-------------------------------------
+
+Ahora vamos al paso número dos. Vamos a buscar el servicio de Databricks, qué es lo que queremos utilizar. Azure tiene un buscador de 
+servicios. Desde el paso número 2.2 como les dije aquí todavía no se crea un clúster de Big Data, primero hay que crear un Workspace, digamos, 
+el área de Ventas quiere hacer proyectos de Big Data, de acuerdo creemos su workspace y dentro ya se empezarán a crear sus clúster, entonces, 
+desde el paso número 2.2 le voy a dar clic a “Crear” y vamos a crear el workspace de prueba. Dentro de mi tarjeta de crédito, para que los 
+costos se carguen a mi tarjeta, dentro del grupo de recursos que creamos hace un momento, desde el paso número 2.3 vamos a crear el workspace 
+Databricks. También vean que podríamos cambiar la región en donde queremos desplegar, no necesariamente todos los recursos que tú despliegues 
+van a vivir en la misma región del grupo de recursos, el grupo de recursos es solamente un agrupador lógico, pero es un estándar y una buena 
+práctica hacer que todos los recursos que tú crees vivan en la misma región que el grupo de recursos, así que le dire que esto va a vivir 
+desde el paso 2.3 en la zona centro sur de Estados Unidos. También Databricks es un servicio de paga, todo lo que usamos se va a cargar en 
+nuestra tarjeta de crédito. Hay 3 tipos de tarifas para Databricks:  
+
+- La estándar la cual no permite segregar los roles, por ejemplo, es clásico que en las empresas quieran hacer lo siguiente: dentro de un 
+workspace sobre el sistema de archivos distribuidos van a haber diferentes clusters y cada cada cluster es un proyecto y cada proyecto tiene 
+un directorio y en donde ya suben los datos y crean sus estructuras de directorios. Pero nada le impida al proyecto 1 entrar al directorio del 
+proyecto 2 y hacer lo que quiera hacer, entonces, tendríamos que definir roles de acceso, que el clúster 1 solamente puede acceder a tales 
+directorios que son del proyecto 1, que el clúster 2 también puede acceder solo a ciertos directorios y así sucesivamente. Es decir, definir 
+los roles de acceso.  
+
+- La cuenta estándar de Databricks no te permite hacer esa segregación, la cuenta premium si te permite hacer esta segregación y generalmente 
+  las empresas trabajan con este plan tarifario.  
+
+- También hay un plan de evaluación, el cual es gratuito por 14 días. vamos a usar este plan gratuito. luego de que digamos hayas practicado 
+  y hayas terminado de hacer lo que tengas que hacer, ya puedes destruir el grupo de recursos para destruir el el workspace que acabas de 
+  crear y si quieres obtener otra vez la cuenta premium pues simplemente te creas otro grupo de recursos y creas otro workspace que será 
+  gratuito también solo por 14 días, en otras palabras, mientras lo borres antes de 14 días no te van a hacer cobros de tu tarjeta de crédito, 
+  al menos no en el servicio de Databricks.  
+
+Una vez que hemos seleccionado el plan tarifario y bueno una empresa realmente va por el Premium, nosotros iremos por el de evaluación, le doy 
+clic a “revisar y crear” y listo, me dice que todo está bien configurado y ahora sí se va a crear el workspace. Desde el paso número 2.4 ya se 
+comenzará a crear el workspace y aproximadamente esto se toma de 5 a 10 minutos, así que, vamos a dejar pensando la creación del workspace ahí 
+y vamos al paso número 3 para ir avanzando en paralelo.  
+
+
+3 - Crear Storage
+-----------------
+
+Dentro del grupo de recursos ya tenemos el workspace, ahora vamos a crear dentro del grupo de recursos un sistema de archivos, recuerden que 
+dentro del workspace tenemos un sistema de archivos de DBFS el que hemos trabajado clásicamente y cuando esto se cree pues ya comenzaremos a 
+desplegar clusters de Big Data. Ahora vamos a crear un sistema de archivos que nada tiene que ver con Databricks, qué es el sistema de 
+archivos de Azure en donde subiremos los archivos que queremos que vivan dentro de Azure. A esto se le llama el storage de la nube, ahí vivirá 
+la información que queramos procesar. Tendremos los datos inputs, entraremos al workspace de Databricks en donde se procesarán, tendremos los
+outputs y volvemos a guardarlos en el storage de Azure de manera permanente. Mejor dicho el sistema de archivos de Databricks es solo de 
+paso, es temporal para subir los datos que quieras procesar, se hace lo que se tiene que hacer, se termina el procesamiento, se saca la 
+resultante y viven en el storage de la nube en la que estés trabajando. Desde un punto de vista de patrones de diseño, DBFS es temporal, no 
+deben de almacenar ahí nada permanentemente. Vamos al paso número 3, el servicio de storage en Azure se les llama cuentas de almacenamiento, 
+vamos a crear una cuenta de almacenamiento. Para no perder la implementación y saber cuando ya esté listo el workspace de Databricks, voy a 
+darle un control clic al logotipo de Azure para que se abra otra pestaña y voy a trabajar desde ahí. Desde el paso 3.1, voy a buscar un 
+servicio conocido como cuentas te almacenamiento, voy a entrar en él y vamos a crear una cuenta de almacenamiento para empezar a subir los 
+datos que queremos procesar. Desde el paso 3.2 le daré clic a Crear y vamos a crear esta cuenta de almacenamiento, dentro del grupo de 
+recursos en el que estamos trabajando, desde el paso 3.3 vamos a crear una cuenta de almacenamiento a la cual le daremos un nombre. Debes de 
+saber que los nombres de las cuentas de almacenamiento son únicas a nivel mundial, no pueden repetirse, ya que, recordemos que estos sistemas 
+de almacenamiento están en la nube, sería como decir que dos páginas web tienen el nombre “google.com”, no solo una página web lo tiene. Lo 
+mismo pasa con las cuentas de almacenamiento, los nombres de las cuentas como van a ser accedidos de internet deben ser únicos a nivel 
+mundial, ya que, es su identificador a nivel mundial. Para eso, desde el paso 3.3, por ejemplo, yo le he puesto mis iniciales, tú le podrías 
+poner aquí tus iniciales para diferenciarlo de otras cuentas de almacenamiento. Luego, ¿dónde se va a crear este storage? estamos trabajando 
+en la zona sur central de Estados Unidos. Hay dos tipos de almacenamiento: los orientados a procesos batcherosy  los orientados a procesos de 
+tiempo real. Por ejemplo, por ahora hemos estado viendo puros procesos batcheros, la próxima semana vamos a trabajar con los procesos de 
+tiempo real.  
+
+    ----------------------------------------------------------------------------------------------------------------------------
+    |                                                                                                                           |      
+    |    Para leer y escribir archivos en procesos batcheros necesitamos discos duros mecánicos. Para leer procesos archivos    |
+    |    y escribirlos en tiempo real necesitamos discos basados en SSD.                                                        |
+    |___________________________________________________________________________________________________________________________|
+
+Acá, por ejemplo, si estuviéramos en un proceso de tiempo real necesitaríamos una cunta de tipo premium (baja latencia SSD). Pero en este caso 
+no es un proceso batchero, así que, con discos duros estándares será suficiente. También dentro de la nube podemos aplicar técnicas de 
+redundancia para duplicar los datos. Es clásico que pase lo siguiente en la nube, la nube tampoco es es perfecta. Por ejemplo, en ocasiones 
+digamos que tú estás trabajando en la región sur de Estados Unidos y por alguna razón esa región falla porque hay un corte de luz, hay un 
+problema con los nombres de de DNS de la región o simplemente falla y no puedes acceder a los archivos que has subido ahí, entonces en otra 
+región digamos en el norte de Estados Unidos tendríamos que tener una copia de nuestros archivos, de esta manera si algo le pasa a esta 
+región, pues, la empresa apunta a la otra región y puede seguir funcionando. A esto se le llama técnicas de redundancia geográfica, aquí por 
+defecto ya está activada, esto por supuesto no es un curso de Azure, para hablar de redundancia habríamos que hablar de muchas otras cosas 
+anteriormente, entonces vamos a decirle que no queremos redundancia, solo una redundancia local. Y ¿esto qué significa? dentro de la misma 
+región se va a crear dos copias de tus archivos en dos racks diferentes, por ejemplo, estamos en la región sur central, digamos que aquí hay 
+20.000 servidores, generalmente en los servidores se acomodan en unos armatostes llamados rack que puede tener de 10 a 20 servidores. Cada 
+rack como son 20.000 servidores, pues, habrían 1.000 racks, cada uno de 20 servidores. Digamos que tu archivo físicamente vive en el rack 1, 
+entonces, lo que Azure va a hacer es en otro rack diferente va a ser una copia de ese archivo, si algo le pasa a este rack se tiene el otro 
+rack y seguiremos viendo el archivo. Este es el tipo de redundancia menos recomendado porque generalmente lo que falla a nivel de las nube es 
+toda una región cuando hay un fallo. Como no es un curso de Azure, esto vamos a dejarlo con el tipo de redundancia más simple, pero en un 
+escenario real sí tendríamos que poner una redundancia más compleja y hacer algunas configuraciones adicionales. Ahora voy a ir a la pestaña 
+de Opciones avanzadas y aqui hay una opción conocida como “Data Lake” la cual vamos a activar. Esto también requiere un poco más de 
+explicación a detalle, nosotros sabemos que este es un curso de Spark, pero en el mundo del Big Data existen muchas otras herramientas aparte 
+de Spark, de hecho, existen tantas que el Gobierno de herramientas se empieza a descontrolar para gobernar todas las herramientas y gobernar 
+los flujos de datos que construyamos existe una estructura de procesamiento llamada Data Lake.  
+
+ 
+
+Data Lake 
+---------
+
+Vamos a explicar lo que es un Data Lake a muy alto nivel para que vean por qué estamos habilitando esta opción. Un Data Lake está compuesto 
+por cuatro capas de procesamiento:  
+
+- Landing_Temp  
+- Landing 
+- Universal 
+- Smart  
+
+Dentro del Landing_Temp se suben los archivos de datos que queremos procesar, generalmente en texto plano. Luego, dentro de Landing hay 
+procesos de binarización que toman estos archivos y los colocan en formatos de binario de rápido procesamiento, por ejemplo, Parquet. Dentro 
+de Universal se aplican técnicas de modelamiento, de reglas de calidad y de casteo de datos, lo que habíamos visto por ejemplo en el 
+arquetipo, por ejemplo, si es un archivo semiestructurado se estructura y luego se limpian los datos y se colocan los tipos de datos 
+correctos, por ejemplo, la edad es un número entero, entonces, dentro de Universal se estructura la información que también vive binarizada. 
+Una vez que tenemos las ingestas de los datos en Universal, dentro de Universal viven las entidades limpias, listas para ser procesadas y 
+estructuradas. En la zona de Smart se hacen las soluciones, por ejemplo, podríamos hacer un reporte con estos datos limpios. Sí sabemos de 
+ciencia de datos podríamos hacer una red neuronal. Aquí es donde ya se hacen las soluciones que negocio necesita. Este concepto es lo que se 
+le conoce como a un Data Lake y para implementarlo no solo necesitamos de Spark, por ejemplo, necesitamos de Hive, necesitamos de alguna 
+herramienta de orquestación, dependerá del tipo de entorno en donde estemos, necesitamos los triggers disparadores y necesitamos los clusters 
+temporales y muchas otras cosas que van más allá de Spark. A lo que voy es que cuando una empresa va a procesar sus datos con tecnologías de 
+Big Data tiene que definir una estructura del tipo Data Lake. Todos estos archivos físicamente viven en una cuenta de almacenamiento dentro 
+de Azure, entonces, aquí lo que le estoy diciendo es esta cuenta de almacenamiento la vamos a usar para construir un Data Lake, por eso se 
+activa. Ahora desde el paso número 3.3 le doy click a “Revisar” para que verifique que todas las configuraciones sean correctas, por ejemplo, 
+algo que podría pasar es que el nombre de la cuenta de almacenamiento ya haya sido tomado por alguien más y si pasa las validaciones le doy 
+clic a “Crear”. Vamos a esperar a que nos confirme la creación de la cuenta de almacenamiento en donde subiremos los datos. Una vez que 
+hemos creado la cuenta, vamos a subir dentro los datos que queremos procesar. Tenemos la cuenta de almacenamiento y tenemos el workspace de 
+Databricks, dentro de la cuenta de almacenamiento existe una jerarquía llamada Contenedores, por ejemplo, dentro de la cuenta de 
+almacenamiento voy a crear el contenedor para el proyecto 1, un contenedor para el proyecto 2 y así sucesivamente. Cada contenedor está 
+aislado uno de otro, entonces, dentro de la cuenta de almacenamiento creemos un contenedor y dentro ya puedo crear directorios y subir 
+archivos de datos.  
+
+
+4 – Subir los archivos a procesar en el storage 
+-----------------------------------------------
+
+Desde el paso número 4.1 voy a regresar al portal de Azure y voy a entrar a la opción de grupos de recursos. Desde el paso 4.2 voy a entrar 
+a el grupo de recursos en el que estamos trabajando y ahí podemos ver el workspace de Databricks y la cuenta de almacenamiento. En el paso
+4.3 voy a entrar a mi cuenta de almacenamiento y desde el paso 4.4 vamos a ir a la opción de contenedores, vamos a crear un nuevo contenedor 
+para que ahí ya podamos subir los datos. Desde el paso 4.5 le daré clic a la opción de “Crear contenedor” y desde el paso 4.6 le voy a poner 
+un nombre genérico, aunque generalmente el contenedor es por proyecto, digamos que en el workspace Ventas te van a hacer 20 proyectos de 
+Big Data, entonces, cada proyecto tendría que tener su propio contenedor. Creo el contenedor y vamos al paso 4.7, voy a entrar dentro del 
+contenedor y puedes ver un contenedor como un sistema de archivos distribuidos que está aislado, solo aparece proyecto. Como es un sistema de 
+archivos puedo crear directorios, voy a crear dos directorios, el input y el output. Desde el paso 4.8 le doy clic a “Agregar directorio” y 
+le digo voy a agregar el directorio “input” y ahí dejaré los archivos de datos que quiero procesar. Luego que Databricks haga todo el proceso 
+con Spark, voy a crear el directorio “output” y ahí se guardarán las resultantes de este procesamiento. Ahora voy a entrar desde el paso 4.9 
+en el directorio input y ahí voy a subir algún archivo de prueba, el archivo “persona.data”. Acá, por ejemplo, también estoy simplificando la 
+carga de datos, digamos que esto fuese un curso de arquitectura sobre Azure, hay un patrón de diseño para la orquestación de las cargas, 
+porque en un escenario real en una empresa allí a las 8:00 de la mañana no va a darle clic a un botón y subir, no, tiene que ser un proceso 
+automatizado. Deben de saber que en el mundo de la nube hay dos roles bien definidos: el on-premise, que sería los servidores que tienen la 
+empresa y el on-cloud que sería la nube en donde estés trabajando, que en nuestro caso es Azure. Acá tenemos la cuenta de almacenamiento, 
+dentro tenemos el contenedor, dentro tenemos el directorio input y negocio tendrá un archivo de datos en la empresa que quiera subir a la nube 
+para procesar. Dentro de la empresa hay un servidor especial que vive en la empresa conocido como GETWAY, el cual es el puente de comunicación 
+desde la empresa hacia la nube. Generalmente es un servidor del tipo Linux y se le llama Getaway. A este servidor Linux que permite la 
+comunicación con la cuenta de la nube recibe este nombre especial, es el rol de Getway. ¿Qué es lo que se hace? hay maneras de hacer montados 
+remotos, por ejemplo, montar este contenedor de manera remota en el Gateway, de esta manera cuando la empresa orqueste, qué sé yo, pues, desde 
+Oracle saca los datos ya la empresa tendrá su orquestador y lo escribe en algún directorio del Getway, que es un directorio montado y de esta 
+manera automáticamente se ve la subida, ya que, es un montado remoto, entonces, está subiendo a la nube. Esto por ejemplo es el patrón de 
+diseño de orquestación que va desde el on-premise a la nube. Ya si esto fuese un curso de Azure o digamos un curso propio de la nube que 
+necesiten ustedes para hacer esta subida ya veríamos cómo automatizar todo esto desde el Gateway, pero acá lo hemos hecho desde la interfaz 
+gráfica, subiendo y diciendo sube este archivo a ese directorio lo cual por supuesto no es del todo realista. Volviendo a nuestro ejemplo, ya 
+subimos el archivo de datos que queremos procesar.  
+
+
+5 - Obtener claves de acceso al storage
+---------------------------------------
+
+Ahora vamos al paso número 5, ya tenemos casi todo listo, tenemos la cuenta de almacenamiento, el contenedor, el directorio input y el 
+archivo de datos que queremos procesar. También tenemos el workspace que tiene su propio sistema de archivos de Databricks y en un momento 
+haremos el montado remoto para ver el directorio input y su contenido como si estuviese dentro del sistema de archivos de Databricks. Para 
+hacer este montado remoto hay que tener las claves de acceso, no cualquiera puede montar remotamente el contenedor, hay que generar unas 
+claves y con esas claves permitir el montaje. Luego de que hayas creado el contenedor y subido el archivo, lo siguiente es crearla las claves 
+de acceso para hacer este montado remoto sobre el sistema de archivos de Databricks. Estamos en el paso número 5.1, voy a verificar que el 
+workspace de Databricks y ya lo podemos usar. Vamos a regresar a la raíz de Azure y voy a entrar nuevamente a los grupos de recursos, volveré 
+a entrar al grupo de recursos en el que estamos trabajando. Ya tenemos listo esto pero nos faltan las claves de acceso para hacer el montado 
+dentro de los clusters qué creemos en el workspace. Desde el paso 5.3 voy a entrar al storage que creamos y desde el paso 5.4 vamos a ir a la 
+una de las opciones que está aproximadamente por el medio llamada “firma de acceso compartido” desde aquí obtenemos las claves para montar el 
+storage. Desde el paso 5.5 vamos a generar ese acceso. Esto también es un poco más complejo que lo que les voy a explicar, por ejemplo, 
+tendríamos que estar hablando de 3 horas de lo que implica hablar acceso sobre Azure, si fuera AWS la historia sería otra también con sus 
+propias 3 horas y así sucesivamente. Creo que ya se entiende el concepto, realmente el preparar la cuenta en la nube es más complejo que lo 
+que estoy mostrando aquí, estamos viendo más que de un punto de vista de arquitectura, lo estamos viendo desde un punto de vista de un 
+desarrollador. Acá por ejemplo ¿qué es lo que va a poder procesar? ¿qué servicios van a poder procesar los datos que viven en storage? 
+cualquier tipo de servicio y acá podría delimitarlo: las claves de acceso que voy a generar que solamente permitan leer datos, que puedan 
+leer lo que hay en en nuestro storage, pero no permitan escribir, entonces, solo permisos de lectura o también de escritura o que puedan 
+eliminar o que puedan leer y listar el contenido o que puedan modificar archivos y así sucesivamente. Acá, por ejemplo, podríamos definir 
+exactamente quien tenga la clave, con esa clave, que puede hacer sobre los archivos que viven en en la cuenta de almacenamiento. También 
+podríamos poner una fecha de inicio y caducidad de la clave, por ejemplo, que esta clave solo sea válido por dos semanas o 3 semanas o lo que 
+necesites tú definir. Incluso podríamos también definir desde qué IP exactamente pueden acceder. Si lo dejas vacío cualquiera que tenga la 
+clave va a poder hacer el montado remoto. Ahora vamos al paso 5.6, hasta el final está la opción de generar la cadena de conexión, le das 
+clic y listo, en función de lo que tú hayas configurado tienes la cadena de conexión. Como se dijo, no todo en el mundo del Big Data es Spark, 
+hay muchas otras herramientas, entonces, dependiendo de la herramienta que tú utilices la estructura de la cadena de conexión será diferente.  
+En nuestro caso vamos a usarla sobre Spark, así que, necesito el token SAS. Ya tenemos la cadena de autorización.
+
+
+6 - Crear cluster Databricks
+----------------------------
+
+Ahora voy a ir al paso número 6. Vamos a crear un clúster dentro de este workspace. Por supuesto que este clúster ya sería de pago. Desde el 
+paso número 6.1 voy a buscar el servicio de Databricks y desde el paso 6.2 aquí podemos ver nuestro workspace que que hemos creado. Voy a 
+entrar en él. Desde el paso número 6.3 vamos a iniciar el área de trabajo del workspace, aquí es donde empezaremos a crear y configurar 
+clusters de Big Data. Ahí está iniciando sesión con nuestras credenciales de Azure, vamos a esperar a que cargue. Desde el paso 6.4 voy a 
+cerrar el tutorial y vean que esto ya se parece a lo que habíamos visto antes solo que esta es una cuenta premium de paga que va a expirar en 
+14 días, pero lo mismo, es la misma interfaz, acá por ejemplo desde aquí creamos los clusters y desde aquí tenemos el sistema de archivos 
+distribuidos. Desde el paso 6.5, vamos a crear un clúster. Esta parte ya no la deberías de hacer si estás practicando, porque existe la 
+posibilidad de que te cobren, recuerda que si tú no sabes nada de la nube y no activas la opción de la prueba gratuita podrían cobrarte. Desde 
+acá por supuesto ya puedo crear todos los clusters que yo quiera, ya no habrá restricción, ya que, es una cuenta de pago. Desde el paso 6.6, 
+le doy clic a “Crear cómputo” para crear un clúster. Desde el paso 6.7, le digo este clúster se llama de esta manera “Big_Data_Academy_Azure”. 
+Luego también podría definir políticas de acceso, por ejemplo, podría decir dentro del área de ventas hay 20 personas, para el clúster que voy 
+a crear solamente van a poder acceder los del correo A, B, C y D, solo entonces ya podría empezar a crear ese tipo de políticas. Por supuesto 
+que esta es una cuenta gratuita y bueno no hay más personas aquí en esta área de trabajo, así que, no puedo agregar, pero lo haríamos desde 
+aquí. Desde acá puedes elegir la versión que necesitas, esto también lo habíamos aprendido, la versión es muy importante porque nos habilita 
+el uso de librerías. Cuando instalamos la librería de XML habría que saber qué versión de Scala específicamente tenemos. Y desde aquí definimos 
+la potencia del clúster, por un momento voy a deshabilitar el auto escalado para conocer un clúster clásico. Acá por ejemplo le podría decir 
+dame 10 servidores de 145 GB de memoria RAM, tendríamos cerca de un 1.5 TB de procesamiento. Desde aquí entonces el arquitecto ya configura esa 
+potencia. ¿Cómo se configura esto? bueno ya dependería de un curso de arquitectura y hay muchos otros conocimientos previos para hacer lo que 
+es el “Sizing” del tamaño de un clúster, pero de manera muy resumida generalmente el “Sizing” o sea “cuántos servidores tiene que tener el 
+clúster” se hace de la siguiente manera: digamos, por ejemplo, que dentro del clúster van a entrar muchos archivos del proyecto que necesita 
+procesar, habrá diferentes pesos, archivos pequeños de 10 GB, archivos muy grandes de 1 TB, archivos medianos de 500 GB y así sucesivamente. 
+Una de las maneras clásicas de hacer el Sizing es que como mínimo necesitaremos la memoria RAM para cargar el archivo más pesado que sería el 
+de 1 TB, por lo tanto, el clúster debe de soportar al menos 1 TB de memoria RAM. ¿En qué configuración? en la que tú gustes. Por ejemplo, 10 
+servidores de 100 GB de RAM o 20 servidores de 50 GB de RAM, nos da exactamente igual.  En la medida de lo posible hay que tratar de que sea la 
+menor cantidad de servidores, pero si eso es imposible pues realmente de igual ,el procesamiento en una menor cantidad de servidores va a estar 
+concentrado en pocos servidores, por lo tanto, la distribución en la red, se acuerdan, por ejemplo, cuando hacíamos cruces con “Join”, ahí la 
+red era muy importante, mover los datos entre 20 servidores es más lento que moverlo entre 10 servidores, por eso siempre se prefiere la 
+configuración con la menor cantidad de servidores posibles. Entonces de manera muy general el Sizing se hace en función del archivo más pesado. 
+Entonces, continuando con la configuración del cluster, por ejemplo, digamos que el archivo más pesado era de 1 TB, entonces podría poner 10 
+de estos servidores (Workers) y listo, con eso ya tendrían lo suficiente para trabajar. Como estamos en la nube también podemos habilitar el 
+auto escalado. Lo que necesitamos es en el peor de los casos, si alguien sube ese archivo de 1 TB, 10 servidores, tenemos 4 semanas para hacer 
+el proyecto, las 4 semanas no van a estar enfocándose en procesar ese archivo de 1 TB, van a procesar también otros archivos, entonces el 
+número máximo de nodos esclavos va a ser 10. Pero, el número mínimo pues generalmente se coloca 3, de esta manera no estamos desperdiciando 
+potencia del clúster. Por ejemplo, digamos que el día de hoy comienza el proyecto y creas el clúster y tiene 3 servidores, digamos 300 GB de 
+RAM y estás trabajando bien. De pronto el día siguiente empiezan a trabajar con 500 GB de datos. Databricks se da cuenta de eso y dice: “voy a 
+levantar dos servidores más y ese día te cobraré más, porque ahora estás usando 5 servidores”, es decir, el clúster escala. Al día siguiente el 
+equipo de trabajo trabaja solo con 300 GB de datos y Databricks dice: “estos dos servidores están consumiendo dinero por las puras, solo 
+necesitas 3 y te viene menos facturación ese día”. Y al día siguiente viene ese archivo de 1TB y ahora sí levantan los 10 servidores que es la 
+configuración máxima que has puesto. Y el día siguiente digamos que viene menos cantidad y solo necesita 3 y así sucesivamente, a esto se le 
+conoce como un “Clúster elástico” o sea un clúster que auto escala, aumenta o disminuye el número de servidores. Así que luego de haber hecho 
+el Sizing y decir: necesito a lo más 10 servidores, habilitamos el auto escalado y como mínimo, esto ya es estándar, que solamente 3 estén 
+encendidos, que estén funcionando y ya en función de la data que venga ya Databricks irá aumentando y quitando servidores para que la 
+facturación venga lo más barato posible. También está el tiempo de inactividad, clásicamente ¿qué es lo que pasa en las empresas? recuerden 
+que todas estas herramientas están orientadas siempre a tener el enfoque empresarial. Digamos que la política es la siguiente: tenemos el 
+clúster clásico y, por ejemplo, para apagarlo doy clic acá y listo lo apagué y al día siguiente lo puedo encender. Aunque en una cuenta de 
+gratuita si apagas el clúster ya no lo puedes encender, tienes que crear un nuevo clúster. Pero es una cuenta de pago le doy aquí y se apagó 
+el clúster. Entonces la política es la siguiente, las personas van a estar trabajando desde las 8:00 AM a las 17:00 PM y ya sabemos que en 
+ocasiones los desarrolladores se quedan un poquito más tarde. El equipo es de 10 personas, 9 se van a su casa a las 17:00 PM, pero hay uno que 
+decide quedarse un poquito más, porque se queda media hora más para terminar una parte que le falta y listo, termino y se va a su casa y se 
+olvida de apagar el clúster y desde las 18:00 PM hasta las 8:00 AM del día siguiente pues está consumiendo dinero, ya que los nodos están 
+encendidos. Siempre hay que activar la política de terminación automática del clúster, es decir que, después de cierta cantidad de minutos 
+de inactividad sobre el cluster cuando nadie lo esté usando, se apaga automáticamente. Digamos que este desarrollador que fue descuidado se 
+va a las 18:00 PM y se olvida de apagar el clúster, pues no pasa nada podríamos configurar para que después de 1 hora que nadie lo esté usando 
+se apague, o sea, se apagaría a las 19:00 PM. Eso se controla desde aquí, generalmente el tiempo estándar que se recomienda es de 2 horas y 
+esto tiene una justificación, recuerda que digamos que a las 12:00 PM o las 13:00 PM las personas se van a almorzar, tienen su hora de 
+descanso, entonces, si tú le pones acá 60 minutos lo más probable es que cuando regreses, ya se haya apagado el clúster, por eso es el estándar 
+a nivel mundial que el auto apagado al menos en empresa sea de 2 horas para que luego de la hora del almuerzo pues siga trabajando y el clúster 
+siga encendido. Vean que todos estos números tienen una justificación, no se colocan porque sí. Una vez que tenemos todo configurado ahora sí 
+le podemos dar clic a “Crear clúster”. En el caso de la cuenta gratuita, solamente se permite la siguiente configuración, para que sea parte 
+de la cuenta gratuita: un clúster de solo un servidor. Si instancias cualquier cosa que sea mayor a un servidor, ya no forma parte de la capa 
+gratuita y te van a cobrar, entonces, digamos que quieres practicar, sería esto: Workers = 1. Pero vean que desde un punto de vista práctico 
+sería lo mismo que tú clúster de la cuenta gratuita. Entonces yo le voy a dar clic aquí a “Crear clúster” y no se va a cobrar porque solamente 
+es de un servidor y ahí tendríamos que esperar de 15 a 20 minutos para que el clúster esté listo. A partir de este punto ya es como si 
+estuviéramos en la cuenta gratuita. 
+
+
+7 - Montar el Storage en Databricks
+-----------------------------------
+
+Ahora vamos a ir al paso número 7. Vamos a hacer el montado remoto del storage dentro de nuestro sistema de archivos de Databricks. Desde un 
+punto de vista de código va a ser lo mismo que si lo hubiéramos hecho en la cuenta de pago, entonces ya puedes practicar esta parte en tu 
+cuenta gratuita. En otras palabras, en la cuenta de paga no le des clic a “crear”, terminas de practicar, te aprendes las configuraciones y 
+ya regresas a tu clúster gratuito. En el servicio de Azure, la cuenta de almacenamiento en donde hemos subido archivos también es gratuita, si 
+subes un archivo de 1 MB o de 2 MB, Azure no te lo va a cobrar, entonces, esa parte también la puedes replicar sin ningún problema. En resumen, 
+este escenario realmente no es del todo realista, porque estamos sobre la cuenta gratuita. En tu casa lo único que tendrías que hacer es 
+montar la cuenta almacenamiento, luego el contenedor, el directorio input / output y colocas un archivo a procesar, luego creas el workspace 
+de Databricks y el clúster. Nosotros utilizaremos nuestra cuenta gratuita que realmente es un workspace que solamente permite crear 1 clúster 
+de Big Data. Ya sabemos que un workspace también tiene su propio sistema de archivos “DBFS” que es compartido por todos los clusters. La 
+cuenta de almacenamiento siempre y cuando subas archivos pequeños en Azure, digamos un archivo de 1 MB, para practicar no hay ningún problema 
+no se te va a cobrar, así que solo esto es lo que tendrías que crear en tu grupo de recursos. Una vez que tengas tu cuenta de almacenamiento 
+y la clave de acceso a ella, vamos a hacer el montado remoto, montaremos este contenedor para que sea visto como un directorio más dentro del 
+sistema de archivos de Databricks. Físicamente los archivos viven en el contenedor de Azure, pero lógicamente viven dentro del sistema de 
+archivos de Databricks. Para Databricks van a hacer archivos como si estuvieran dentro de su sistema de archivos. ¿Dónde se hacen los montados 
+remotos? literalmente podríamos hacerlo en cualquier directorio, pero en la raíz del sistema de archivos hay un directorio especial 
+llamado “/mnt” de “Mount” (montado en inglés). Dentro de este directorio es donde se hacen los montados de manera remota. Vamos a crear dentro 
+de /mnt un directorio llamado “dataset” y ese directorio es el que va a ser el montado remoto al contenedor en donde estamos trabajando o sea 
+dentro de “dataset” veremos al directorio de “input” y “output”. En Databricks leeremos con los dataframes los archivos desde “input”, haremos 
+lo que tengamos que hacer, tenemos la resultante y las escribiremos en el directorio “output”,  ósea, las estaríamos escribiendo aquí dentro 
+de la cuenta de almacenamiento de Azure. Desde el paso 7.1 defino todo lo necesario para hacer ese montado remoto, primero el nombre de la 
+cuenta de almacenamiento en donde están los datos que quiero montar. Una cuenta de almacenamiento tiene varios con contenedores, ya les había 
+explicado que cada proyecto tiene su propio contenedor, un contenedor aísla un sistema de archivos para que los proyectos no se interrumpan 
+entre sí. El único contenedor que hemos creado es el contenedor “dataset”. Y finalmente necesitamos el Token SAS, que es el token de seguridad. 
+Teniendo estos 3 datos desde código ya puedo hacer el montado remoto, este sería el input para ti como desarrollador. Vamos al paso 7.2. Voy a 
+crear un notebook en Scala que se va a llamar AZURE, acabamos de hacer una conexión hacia Azure sobre nuestro clúster gratuito. Ahora vamos al 
+paso 7.4, vamos a definir las variables que necesito para conectarme. ¿Cómo se llama mi storage? lo copio y lo pego directamente. El container 
+pues se llama “dataset” y el token SAS es esa cadena de conexión que hayas generado. Ten bastante cuidado porque generalmente empiezan con un 
+signo interrogación y así que cópialo con mucho cuidado y lo pegas, no debe haber espacios. Asegúrate también de eso que es uno de los errores 
+más comunes. Ya tenemos las 3 variables que almacenan la información para el montado remoto. Ahora desde el paso 7.4 vamos a hacer ese montado 
+remoto, voy a crear una variable llamada configuración “config” y primero voy a escribir directamente toda la cadena de conexión para que la 
+conozcan. Vamos a montar a un sistema de archivos, ¿de qué nube? de Azuere y para eso necesitamos un token de autenticación, ¿qué tipo de 
+autenticación vamos a usar? una basada en el Token SAS, que es la autenticación que habíamos generado y, ¿a qué container nos queremos 
+conectar? a un container que se llama “dataset” y ese container ¿en qué cuenta de almacenamiento vive? vive en una cuenta de almacenamiento 
+que se llama de esta manera y luego viene el protocolo de montado que utiliza la nube, esto ya varía de nube en nube, por ejemplo, en el caso 
+de Azure el protocolo de montado es “.blob.core.windows.net”. Ya hemos definido qué es lo que queremos montar, la autenticación y el protocolo. 
+Dentro de Databricks hay una variable llamada “Databricks utils” que tiene utilitarios para diferentes cosas, dentro hay un utilitario para la 
+manipulación del sistema de archivos y dentro de este tenemos dos utilitarios: uno para montar y otro para desmontar. Primero voy a desmontar, 
+debo de asegurarme de que en esta ruta (“/mnt/dataset”) no haya nada montado previamente, así que primero voy a desmontar por si alguien ya 
+montó. Había olvidado colocar esta línea en el en el manual, y ahí tenemos que esperar simplemente.
+
+                                                      dbutils.fs.unmount(“/mnt/dataset”)
+
+Mientras se va realizando el desmontado por si hubiese algo montado, ahora voy a escribir la parte del montado. Dentro de los utilitarios de 
+Databricks volveremos a llamar a los utilitarios para manipular el sistema de archivos y llamaremos al utilitario de montado. Ahora 
+configuramos, abre y cierra paréntesis, le doy un par de enters porque es algo largo y debemos de definir 3 parámetros: primero ¿qué es lo que 
+quiero montar? la fuente, voy a escribirlo directamente como una cadena y luego ya lo pongo con las variables. El protocolo del sistema de 
+archivos de Azure así como existe el dbfs:// que es el protocolo de Databricks, Azure no tiene ese protocolo, sino, que utiliza el protocolo 
+wasbs://. Luego, tengo que indicar el contenedor al que voy a acceder “dataset”, luego, “@” la cuenta de almacenamiento que contiene el 
+contenedor y con esto ya tengo la referencia. Vamos a montar algo de Azure que vive en esta cuenta de almacenamiento y el contenedor que voy a 
+montar es este de acá. Después de eso agregó el protocolo de montado qué sería este de acá. Y listo, ya definimos lo que quiero montar. Ahora 
+voy a colocar todo esto con las variables para tener el código parametrizado. Ahora hay que definir dónde lo vamos a montar, para eso tenemos 
+la opción “mountPoint”. Montaremos en la raíz del sistema de archivos de Azure, en el directorio de montado o realmente donde yo quisiese, 
+vamos a montarlo en el directorio “/mnt/dataset”. Si el directorio no existe, se crea. Como tenemos esa variable parametrizada pues ahí la 
+coloco. y listo, ahí se hará el montado esta fuente dentro de este directorio. Ahora hay que agregar el token de seguridad, para eso tenemos 
+la tercera variable “extraconfigs”. Aqui podemos configurar varias cosas con una estructura de clave-valor. Con esto ya tenemos todo listo. 
+Le doy CTRL + ENTER y el montado se realiza entre aproximadamente de 1 a 2 minutos. Vamos a estar ahí pensándolo por un momento y con esto 
+localmente dentro del clúster se ha hecho ese montado y en el directorio “/mnt/dataset” vamos a ver los los subdirectorios “input” y  “output” 
+como si estuvieran dentro del sistema de archivos de Databricks y ya podemos leerlos y procesarlos con todo lo que hemos aprendido. Listo ahí 
+lo montó.
+
+       ________________________________________________________________________________________________________________________
+      |                                                                                                                        |  
+      |  Databricks File System NUNCA debe ser usado como un sistema de almacenamiento permanente, SOLO ES TEMPORAL, de paso,  |  
+      |  para hacer el montado de los verdaderos sistemas de entrenamiento más robustos.                                       |        
+      |________________________________________________________________________________________________________________________|
+
+      
+8 - Destruir recursos
+---------------------
+
+Vamos al paso número 8 del documento. Eliminamos los recursos.
