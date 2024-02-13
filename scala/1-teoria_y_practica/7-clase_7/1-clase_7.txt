@@ -1,0 +1,505 @@
+CLASE 7
+=======
+
+Hay que entender bien que implica un proyecto de tiempo real. Cuando ustedes vayan dentro de una empresa generalmente les van a pedir 
+hacer proyectos batcheros, esos son los que más abundan y ya conocemos un arquetipo de desarrollo para un proyecto batchero, habian 
+diferentes capas: 
+
+1. Lectura 
+2. Modelamiento 
+3. Limpieza con reglas de calidad 
+4. Preparación de tablones 
+5. Procesamiento y 
+6. Escritura 
+
+Por supuesto que dependiendo del tipo de proyecto que a ustedes les pidan habrá variaciones. Un arquetipo es solo un punto de partida, 
+no significa que todos los proyectos tengan que seguir el arquetipo, dependiendo de cómo ustedes van ganando experiencia en escenarios 
+reales, van a agregar y quitar cosas de ese arquetipo según la necesidad de negocio. El arquetipo entonces es solo un punto de partida. 
+Sin embargo, eso solo se aplica para proyectos batch. Para el caso de proyectos en tiempo real la situación es muy diferente. El arquetipo
+que vamos a ver el día de hoy es muy estricto, ya que, si falta o sobra un componente pues ese proceso no va a funcionar bien. Primero 
+entendamos la naturaleza de los proyectos de tiempo real, ya que, hay mucho de lo que hablamos. Vamos a nivel técnico, hablemos de la CPU, 
+cómo procesan la CPUs. Se acuerdan ¿que en un momento hicimos tuning computacional de la CPU? para recordar se dijo que 1 núcleo de CPU 
+formalmente solo puede procesar un hilo de procesamiento, pero esto solo se aplica a las CPUs tradicionales que nosotros tenemos en nuestras 
+casas, en nuestras computadoras, es decir, una computadora de escritorio pues no tiene una CPU de servidor, tiene una CPU de computadora de 
+escritorio. Un núcleo de CPU procesa solo un hilo de procesamiento. Para los servidores empresariales esto no es así, pueden procesar hasta 
+3 hilos como lo vimos, pero también dijimos que esto es peligroso porque estamos haciendo uso de un 100% del tiempo del núcleo de CPU. 
+¿Qué es lo que podría pasar? que si viene una instrucción muy compleja, el núcleo de CPU colapsaba y dejaba de funcionar. Así que dijimos 
+que la estrategia era así: si las instrucciones son simples pueden entrar 3 núcleos de CPU, si las instrucciones son complejas que solo 
+entren dos y habíamos hecho esto con un factor de 2.5 al momento de hacer el tunning, era la estrategia. Pero ahora hablemos de procesos que 
+potencialmente podrían exceder el uso del tiempo del núcleo de CPU. Volvamos a los núcleos de CPU de nuestras computadoras de escritorio. 
+Tenemos abierto el Word, el navegador Chrome, el PowerPoint, Zoom, TeamViewer y tienes abierto en tu computadora muchas otras cosas, 
+diferentes programas. Cada programa tiene su propio juegos de instrucciones para funcionar y compiten por el tiempo de uso del núcleo de CPU. 
+Entonces el programa 1 pues tiene muchas instrucciones igual que el 2, igual que el 3 y así sucesivamente. El núcleo de CPU solamente puede 
+procesar un hilo de procesamiento a la vez, entonces, las instrucciones se intercalan. Entonces el núcleo de CPU intercala las instrucciones, 
+ejecuta tres instrucciones del programa 1, dos instrucciones del programa 4,  tres instrucciones del programa 2 y así sucesivamente. A esto 
+se le conoce como “Pseudo paralelismo”, porque realmente no es un paralelismo real, sino que, las instrucciones van intercalando su ejecución 
+en el núcleo de CPU. Como el núcleo de CPU ejecuta cada instrucción tan rápido, en nuestra computadora aparentemente los 5 programas están 
+funcionando de manera simultánea, no hay problema, podemos trabajar. Pero, ¿qué pasa si en tu computadora abres muchos programas? Pues, como 
+que va yendo más lento y de pronto la computadora empieza a estar lenta, esto es porque los el núcleo de CPU no intercala tan rápido todas 
+las instrucciones de tantos programas que tienes abiertos y se pone lenta la máquina. Pseudo paralelismo tiene ese problema, mientras más 
+instrucciones de diferentes hilos de procesamiento procese, pues, la CPU ya no da la velocidad de procesamiento y termina colapsando. Por 
+ejemplo, es clásico que cuando abres muchos programas y la CPU colapsa te aparezca la pantalla azul de la muerte en Windows, básicamente fue 
+un colapso del núcleo del CPU, aunque también hay muchas otras razones. 
+
+Sigamos hablando de computadoras de escritorio. Hoy en día generalmente las computadoras de escritorio son multi núcleos, podrían tener dos 
+procesadores de 2 núcleos cada uno o tal vez podría tener solo un procesador de cuatro núcleos, al final nos da igual cuántos procesadores 
+tenga, lo que importa son los núcleos de CPU. Digamos que tenemos cuatro núcleos de CPU, ahí entonces abrimos el Word, abrimos el PowerPoint, 
+abrimos Zoom, abrimos un navegador y listo, ahora sí estamos frente a un paralelismo real, ya no hay un pseudo paralelismo, ya que, cada hilo 
+de ejecución, cada programa corre sobre su propio núcleo de CPU. Por supuesto, esto también tiene límite, mientras más cosas abras, pues, en 
+algún momento los núcleos de CPU  llegarán a su límite y terminarán colapsado. 
+
+Ahora vamos a hablar de servidores, que es lo que vamos a usar para desarrollar proyectos de Big Data. Aquí también pasa lo mismo, tenemos 
+un servidor que tenga 40 núcleos de CPU, esto puede parecer mucho, de estos 40 núcleos de CPU generalmente 2 núcleos de CPU están orientados 
+para que el sistema operativo funcione, de esa manera si los procesos colapsan, no colapsa todo el servidor, así que, a nivel de 
+infraestructura dos de estos núcleos nunca los deberíamos de tocar, van a estar siempre reservados para el sistema operativo, eso significa 
+que en el peor de los casos si tú eres un mal desarrollador y programas algo que colapsa los núcleos, bueno no pasa nada, el servidor va a 
+seguir funcionando, simplemente lo que colapsa será tu programa. En los servidores empresariales, ese el primer aspecto a tener en cuenta. 
+Esto se aplica también a los proyectos batcheros. 
+
+Ahora sigamos hablando de proyectos batch, pero escalemos a un clúster de Big Data. Acá tenemos un clúster y acá tenemos 400 núcleos de CPU, 
+digamos que son 10 servidores de 40 núcleos de CPU cada uno, tendríamos 400 núcleos. Nosotros ya hemos aprendido por la clase de tuning a 
+hacer una reserva computacional. Hablemos de la CPU, digamos que de esos 400 núcleos de CPU reservamos un 10% de la potencia del clúster o 
+sea tendríamos 40 núcleos de CPU. ¿Cuál sería el factor de paralelización de nuestro programa? no sería un “x40”, porque, recordemos que los 
+servidores empresariales pueden recibir hasta 3 hilos de CPUs. La lógica como les dije en un principio es dos hilos si son instrucciones muy 
+complejas y 3 hilos si son instrucciones simples, eso se representa por el factor 2.5, 40 por 2.5 nos da 100 y ese sería el factor de 
+paralelización. Con 40 núcleos de CPU hemos multiplicado el proceso hasta 100 veces más rápido. Y hasta ahí no hay problema, tendríamos 
+100 hilos de procesamiento que se distribuirían entre los 40 núcleos del CPU y no habría posibilidad de colapso. Vean que en un proceso 
+batchero eso está bien controlado. 
+
+Ahora vamos a un proyecto de tiempo real. Aquí es donde empiezan los problemas y aquí es donde vamos a necesitar tener dos infraestructuras 
+diferentes: una para capturar la tormenta de datos y otra para procesarlos y una tercera infraestructura de sincronización entre ellas dos. 
+Hay que conocer todo esto y generalmente los desarrolladores no conocen de estos temas de orquestación de infraestructura y por eso fallan 
+al momento de hacer procesos de tiempo real. Veamos el problema: hablemos de una fuente de datos de tiempo real que todos conozcamos, algo 
+simple, por ejemplo Instagram. En Instagram una persona puede conectarse a las 15:00 PM y dejar un comentario, como que puede hacerlo en las 
+03:00 AM, a las 04:00 AM, a las 05:00 AM, a las 07:00 AM. Literalmente a cualquier hora. Generalmente las fuentes de datos están generando 
+datos 24/7, de manera permanente. Otro ejemplo podrían ser las transacciones que se hacen con tarjetas de crédito en los servidores de visa 
+o mastercard, alguien puede comprar un producto a las 16:00 PM como lo puede hacer a las 04:00 AM, entonces, están enviando información 
+constantemente. También cada uno de estos registros que envían estas fuentes de datos en tiempo real, digamos que aquí tenemos un comentario 
+de Instagram, si yo guardo ese comentario de Instagram en un archivo TXT y le doy clic derecho para ver su peso, estoy seguro de que ni 
+siquiera va a llegar al kilobyte. pesa poquísimo. El problema está en que estas fuentes de datos de tiempo real no generan solo un registro 
+en 1 segundo, sino que, generan cientos de miles de registros por segundo, que traduciéndolo podríamos hablar de volumetrías de entre 10 GB 
+a 100 GB por segundo. Una cosa es procesar un archivo de 100 GB y otra cosa es procesar cientos de miles de transacciones en 1 segundo que 
+en su conjunto pesan 100 GB pero por separado pesan poco, la naturaleza es diferente. A estos registros generados por las fuentes de datos 
+en tiempo real desde un punto de vista técnico se les llama “STORM DATA” o en español “Tormenta de datos”. Literalmente es como una tormenta 
+que hay sobre una gran ciudad, sobre una gran ciudad pues llueven gotitas que pueden llegar a inundar toda la ciudad, cada gotita es 
+insignificante por sí sola, pero en su conjunto va a haber una inundación en la ciudad. Por eso se le llama Storm data, las fuentes de 
+datos en tiempo real generan Storm data, registros que pesan poco, pero en conjunto es mucha información. ¿Cuál es el problema con el Storm 
+data? vamos a ponerlo en un escenario con el que podrías encontrarte en una empresa, supongamos que van a ser una aplicación móvil de 
+geolocalización, digamos tú estás con tu celular caminando y van a construir un modelo analítico, una red neuronal que prediga según tu 
+posición si hay algún lugar de interés para ti, por ejemplo, digamos que el día de hoy sales a la 13:00 PM a caminar de tu casa y a ti te 
+gusta comer pato asado, es tu platillo favorito y todavía no has almorzado y son la 13:00 PM y cerca de ti hay un restaurante en donde 
+venden pato asado, entonces, hay una aplicación que te dice: oye hay un restaurante que cumple con uno de tus gustos y toma hay un cupón de 
+descuento que te ofrece este Restaurant. En este ejemplo ¿que necesitaríamos? hay varias variables si esto fuera un modelo analítico, pero 
+desde el punto de vista de real time, necesitamos constantemente preguntar cuál es la geolocalización de esta persona, cuál es su XY. 
+Entonces el celular constantemente tendrá que enviar a nuestros servidores la localización y el modelo analítico tomará esa geolocalización 
+y verá que establecimientos están cerca según el perfil de la persona, algunos les gusta el pollo, a otros el pato, a otros la carne, etc. 
+dependiendo del gusto te dirá hay un restaurante cercano y hay un cupón de descuento. Ese podría ser un ejemplo de caso de negocio. Uber o 
+Waze también hacen lo mismo, envían constantemente la localización de las personas, es decir, hay una tormenta de datos que están generando 
+esos celulares. los XY y el envío se hace cada segundo. Ese es un ejemplo clásico de Storm data. ¿Cuántos registros se envían por segundo? 
+pues pueden llegar al orden de cientos de miles. Digamos que queremos procesar estos cientos de miles de registros, vamos a enviarlos al 
+clúster de Big Data. Aquí tenemos el clúster de Big Data y voy a poner un número redondo para entender el ejemplo fácilmente y digamos que 
+tenemos 100 núcleos de CPU. Están viniendo 100.000 transacciones por segundo generadas en tiempo real, pueden ser geolocalizaciones, pueden 
+ser comentarios de alguna red social, pueden ser notificaciones push de un celular, son 100.000 transacciones de manera genérica. Tenemos 
+100 CPU, eso significa que cada CPU va a estar recibiendo 1000 hilos de procesamiento y nosotros sabemos que a nivel empresarial los mejores 
+núcleos de CPU pueden recibir hasta 3 hilos, pero acá estamos enviando 1000, entonces, es un hecho que todo esto va a colapsar. ¿Qué significa 
+esto? que si enviamos directamente a la Storm data nuestra clúster de procesamiento, pues esa infraestructura va a colapsar, no va a poder 
+hacer el procesamiento en tiempo real, el hecho es porque los núcleos de CPUs no pueden procesar tantos hilos de peticiones de procesamiento. 
+Este es un problema clásico y es un antipatrón de diseño. El antipatrón de diseño es enviar directamente al Storm data el clúster de 
+procesamiento y eso sí o sí produce un colapso. Antes de eso, cuando digamos que tú estás en un escenario de pruebas, dices voy a hacer un 
+proceso de tiempo real y digamos que envías 10 registros solamente para ver si el clúster lo procesa y 10 registros por segundo vas a ver 
+que hay no hay ningún problema. Por eso en la etapa de desarrollo estos problemas no suceden, pero cuando se va a la etapa de producción 
+todo termina colapsando y ahí hay un problema porque el proyecto ya lo desarrollaste de esta manera y hay una arquitectura más compleja y 
+tendrían que rehacer el proyecto para solucionarlo. Vamos a solucionar este problema, para solucionar este problema vamos a necesitar de 
+3 infraestructuras diferentes, literalmente son 3 clústers: 
+
+1. Primero conozcamos 1 de ellos. Aquí tenemos el clúster de procesamiento que funciona con un motor de Spark, hasta ahí no hay problema, ese 
+es el clúster que hemos estado usando constantemente. Aquí tenemos la fuente de datos que está enviando los datos en tiempo real, ya sabemos 
+que no podemos enviarlo directamente al clúster de procesamiento. En el medio vamos a poner un segundo clúster. Este clúster va a estar 
+especializado en capturar la tormenta de datos, va a ser su único objetivo, no va a procesar información, solo va a capturar tormenta de datos. 
+Dentro de este clúster escribiremos todas las transacciones que lluevan y esas transacciones se van a encolar, por ejemplo, digamos que vienen 
+100.000 registros por segundo, este segundo clúster lo que hará es encolar cada una de esas transacciones a nivel de nanosegundo, ¿a qué me 
+refiero con esto? por ejemplo, podría ser que esta transacción vino a las 08:01 AM con 1 nanosegundo y esta segunda transacción también vino a 
+las 08:01 AM, pero con 7 nanosegundos. Para evitar concurrencia de transacciones, el tiempo de aterrizaje de esas transacciones se maneja a 
+nivel de nanosegundo para poder encolar el orden de llegada de las transaccione. Ahí tenemos las transacciones encoladas,100.000 transacciones 
+que se generaron en un segunda. Una vez que se han encolado las transacciones, este clúster le va a enviar la información a procesar al 
+clúster Spark en forma de un archivo de datos. Dentro estarán las 100.000 transacciones una tras otra, pero en un archivo de datos. Y Spark 
+leerá este archivo de datos dentro de un dataframe tal cual leíamos los otros archivos de datos. Una vez que está en un dataframe clásico, 
+esto ya es más fácil de ser procesado en el clúster, por ejemplo, reservamos el 10% de la potencia del cluster y el archivo se divide entre 
+los servidores que signifiquen esa potencia y ya no hay posible colapso, ya que, se sigue procesando un archivo clásico. Las técnicas de 
+procesamiento batcheras la seguimos aplicando aquí, ya que, lo que el clúster recibe es solo un archivo, ya no recibe transacciones, por lo 
+tanto, reservas la potencia y sobre esa potencia se parte el archivo y ya se hace el procesamiento clásico tal cual si fuera un proceso batch. 
+Estos eventos se van a disparar cada segundo, por ejemplo, en este segundo llegó 100.000 transacciones, se colocó un archivo, se colocó en un 
+dataframe clásico y se hizo el procesamiento de datos clásicos sobre el clúster. El siguiente segundo llovieron más transacciones, digamos que 
+ahora vinieron 120.000 transacciones, se coloca en un archivo de datos, se coloca un datoframe y el clúster los procesa y así sucesivamente. 
+A esto es lo que se le conoce como el “Patrón de procesamiento Micro Batch”, porque no es realmente un proceso batchero, si no, es un proceso 
+batchero más pequeñito que se dispara cada segundo para evitar colapsar el clúster. De esta manera puedes seguir aplicando las técnicas de 
+desarrollo de los procesos batcheros y olvidarte que fueron generados por fuentes de datos de tiempo real y tampoco existe el colapso de los 
+núcleos de CPU, ya que, lo que se procese es un archivo de datos, no peticiones sueltas. Ahora que hemos entendido este concepto vamos a hacer 
+un detalle más técnico de qué es lo que hay dentro de este clúster. El clúster que soporta el Storm data es muy particular en el sentido en que 
+guarda la información de manera temporal, su único objetivo es soportar la tormenta de datos. Pongamos un ejemplo clásico también para poder 
+entenderlo. Digamos por ejemplo que te han pedido a ti hacer un proyecto de redes sociales, hablemos de redes sociales que es algo que todos 
+conocemos como tiempo real, y te dicen vamos a hacer un análisis de la política actual en Latinoamérica y para eso nos vamos a conectar en las 
+diferentes páginas de Facebook, de los diferentes diarios y periódicos que hayan en todos los países de Latinoamérica, por ejemplo, está el 
+Facebook del diario El mercurio, está el Facebook del diario La República, hay diferentes fuentes de datos, diferentes periódicos a lo largo 
+de Latinoamérica, ahí se van a estar generando comentarios de las personas en tiempo real, hablando bien o mal del Gobierno, de temas políticos 
+y económicos. Nuestro interés es saber de qué habla la gente a nivel político y económico en Latinoamérica. Aquí tenemos el clúster que 
+soporta el Storm data, así como los archivos los podemos colocar dentro de tablas de bases de datos, lo mismo pasa con el Storm data, a los 
+repositorios de una fuente de datos en tiempo real, aquí por ejemplo tenemos 7 fuentes de datos en tiempo real, a un repositorio de datos de 
+fuentes de tiempo real se le conoce como “Tópico”, aquí, por ejemplo, la fuente del diario El mercurio pues tendría su tópico, ¿cómo se 
+llamaría este tópico? como el nombre del periódico, El Mercurio. Aquí el de la República, que es un periódico de otro país, tendría también 
+su propio tópico en donde se estarían encolando los comentarios que la gente va dejando en tiempo real y así sucesivamente. Cada fuente de 
+datos que tú quieras capturar en tiempo real ¿dónde se almacena? dentro de un tópico, es el equivalente a una tabla, pero el tópico está 
+orientado para un almacenamiento en tiempo real. En los tópicos los registros se encolan mientras van llegando. Estos tópicos algunos también 
+les llaman “colas” porque encolan los registros en el orden de llegada de los nanosegundos. Así que dirían: oye vamos a hacer un proyecto de 
+tiempo real de 5 fuentes de datos de tiempo real, necesitaremos crear 5 tópicos para ahí dejar los datos que queremos procesar. 
+
+¿Qué tecnología se encarga de gestionar los tópicos de tiempo real? 
+
+Así como teníamos por ejemplo a HDFS, que es un sistema de almacenamiento distribuido gratuito y Amazon por ejemplo tiene el S3, que es un 
+sistema también de almacenamiento pero propietario es de Amazon no es software libre a diferencia de HDFS, algo parecido pasa con las 
+tecnologías de tópicos. Como software libre para gestionar un clúster de tópicos existe Kafka. Kafka es la tecnología de software libre 
+estándar para creación de tópicos para captura de datos en tiempo real. Sin embargo, si tú te vas a alguna nube en particular cada nube 
+también tiene su propia tecnología propietaria que le permite crear tópicos. Por ejemplo, Azure tiene a “Eventhub” que es su Kafka propietario, 
+también hace lo mismo, permite crear tópicos para capturar datos en tiempo real. AWS tiene a “Kinesis” también te permite crear tópicos en 
+tiempo real y por último GCP tiene a “PubSub” y también hace lo mismo, te permite capturar datos en tiempo real de fuentes en tiempo real. 
+Estas 3 tecnologías tienen dos interfaces de comunicación, toda tecnología tiene una interfaz de comunicación para que puedas hablar con él, 
+tienen la interfaz propietaria, es decir, hay una interfaz para hablar con Eventhub que solo es Eventhub, de Kinesis y de PubSub, pero también 
+tienen la interfaz Kafka, es decir, si tú conoces de Kafka puedes hablar con Eventhub, con Kinesis o con PubSub. Si no te sabes la interfaz 
+propietaria de estas tecnologías. Por eso es que Kafka es el estándar de momento de aprender de captura de datos en tiempo real, ya que, con 
+conocer Kafka se te facilita el entendimiento de los otros motores de tópicos en tiempo real. Así que vamos a aprender Kafka, que es agnóstico 
+a la nube en donde realmente exista el proyecto. Entonces ya hemos entendido, Kafka es la tecnología que gestiona el clúster en donde se crean 
+los tópicos. 
+
+Ahora vamos a entender cómo se crea un tópico. también es simple, tienes 5 fuentes de datos de tiempo real, son 5 tópicos. Pero ¿cómo funciona 
+Kafka? en un clúster Kafka lo importante es la memoria RAM, ya que, nada se guarda en el disco duro. ¿Cómo funciona Kafka por detrás? deben de 
+saber que el almacenamiento en el clúster Kafka se hace sobre la memoria RAM, no se hace de los discos duros, porque un disco duro es 100 veces 
+más lento que la RAM y lo que nosotros queremos es capturar los datos lo más rápido posible. Aquí tenemos el clúster Kafka, digamos que tenemos 
+1000 GB de memoria RAM en total para nuestro clúster Kafka, dentro de esa memoria RAM podemos crear todos los tópicos que queramos. Vamos a 
+crear dos tópicos y tenemos dos fuentes de datos y están generando datos en tiempo real. Al día la fuente de datos 1 en tiempo real genera 1 GB 
+de información y la fuente de datos 2 en tiempo real genera 9 GB gigas y en total los dos suman 10 GB al día, eso significa que diariamente 
+estas dos fuentes de datos están consumiendo 10 GB de la memoria RAM, porque se escribe en la memoria RAM para que la escritura sea muy rápida, 
+escribir en el disco duro en tiempo real es extremadamente lento, así que el tópico vive en la memoria RAM. Al día estas dos fuentes de datos 
+están generando 10 GB de RAM, eso ¿qué significa? que en 100 días los tópicos ya estarían llenos, ya no habría memoria RAM y ya no podríamos 
+capturar más información. Esto sería un anti patrón de diseño, los registros que nosotros capturemos de las fuentes de datos y vivan en los 
+tópicos solo deben de vivir por un día y al día siguiente eliminarse, porque si no la memoria RAM del clúster se llena. ¿Esto a que se debe? 
+recuerda que estamos en un proyecto de tiempo real, aquí está la cajita de procesamiento, para procesar los datos que están lloviendo en tiempo 
+real. ¿Cada cuánto se va a disparar el evento? pues probablemente cada segundo o cada minuto, se extraen los registros, se hace lo que se tiene 
+que hacer y listo, después otro segundo se extraen los registros que llovieron en ese segundo, se hace lo que se tiene que hacer y se guarda y 
+así sucesivamente. Es decir, no tiene sentido que los registros estén 3 meses guardados en el tópico se supone que van a ser procesados en 
+tiempo real, por lo tanto, hay un tiempo de expiración. Cualquier proyecto de tiempo real tiene hasta un día para extraer los registros que 
+hayan aterrizado y procesarlos. ¿Por qué se hace eso? porque si no la memoria RAM del clúster Kafka se llena y ya no puedes capturar datos, 
+como la naturaleza es de tiempo real tiene sentido de que esos registros expiren a lo más en un día, porque si el proyecto procesa diariamente 
+entonces pues ya no es un proyecto de tiempo real es un proyecto batchero no tendría sentido hacerse en tiempo real. Así que cualquier registro 
+que aterrice en un tópico solamente va a vivir por un día. Desde un punto de vista de procesamiento de datos ¿esto qué significa? digamos que 
+aquí tenemos los comentarios de Facebook y hay dos proyectos que están interesados en procesar esos comentarios de Facebook, aquí hay un 
+proyecto que va a ser analítica de sentimientos, va a revisar el comentario de Facebook y para cada comentario va a decir si están hablando 
+bien o mal de nuestro producto. También hay otro proyecto que lo que quiere es encontrar las tendencias, básicamente es un contador de 
+palabras, va a tomar los registros y va a ir contando qué palabras se repiten más, por ejemplo si se repite más la palabra perro significa 
+que en Facebook están hablando de perros en ese momento, son dos proyectos diferentes. Así como una tabla puede ser consumida por proyectos 
+diferentes, pues lo mismo pasa con los tópicos pueden ser consumidos por proyectos diferentes. También hay que entender los tiempos de 
+procesamiento, ¿qué significa procesar en tiempo real? eso lo define el negocio, digamos que la analítica de sentimientos para saber si están 
+hablando bien o mal de nuestro producto, para ellos tiempo real es 1 minuto, entonces cada minuto analizan todos los comentarios que hayan 
+aterrizado en Facebook en ese minuto y aquellos que estén hablando mal de nuestro producto le enviamos un correo electrónico con un descuento 
+para cambiar su opinión por ejemplo. Mi negocio te dice para mí eso se debe hacer cada minuto, yo entiendo tiempo real como un minuto. El otro 
+proyecto que también procesa los registros de Facebook para encontrar las tendencias “qué es lo que está hablando la gente” o sea básicamente 
+un contador de palabras, entiende tiempo real como 1 hora, cada hora yo quiero ver cuál es la tendencia, en esta hora la tendencia son los 
+perros y a la siguiente hora la tendencia son los gatos. El negocio es quien define qué significa tiempo real, si ustedes revisan la literatura 
+académica se van a encontrar con definiciones muy estrictas, porque hay proyectos Batch, Micro Bach, Real time, Streaming e incluso hay un 
+nivel cuántico que es teleportación de datos y esto está interesante para un estudio académico, pero desde un punto de vista empresarial 
+tiempo real lo define negocio, no nosotros, puede ser 1 minuto, puede ser 1 hora, puede ser un segundo. Pero si negocio define tiempo real 
+como un día o más entonces eso ya no es tiempo real, ahí tendrían que atacar el problema con todo lo que hemos aprendido para la parte de 
+Batchera. Así que para efectos prácticos en las empresas cualquier cosa que esté por debajo de un día en tiempo de procesamiento lo puedes 
+tomar como un tiempo real. De hecho algunos dicen que cualquier cosa que esté por debajo de una hora, pero eso ya es relativo depende también 
+del desarrollador. 
+
+Ahora que hemos entendido que el negocio es el que define el tiempo real de procesamiento, vamos a poner los 3 tiempos que existen en los 
+procesos de tiempo real: 
+
+1. Fuente de datos 
+2. Tópico en donde se captura la tormenta de datos, ahí hay un registro de ejemplo y
+3. Luego, hay un proyecto 
+
+Tiempo de ingesta
+-----------------
+
+Hay que entender cuáles son esos 3 tiempos, porque algunos lo confunden y esto repercute en el código. Una cosa es el tiempo de ingesta, cada 
+cuánto tiempo se ingesta los datos desde la fuente de datos al tópico, eso no lo define negocio eso lo define la fuente de datos. Por ejemplo, 
+digamos que estamos frente a Visa, y esta genera transacciones en tiempo real. Si tú quieres ingestar los datos de visa debes hacer la llamada 
+al servidor de visa cada 10 segundos, así lo define Visa. Entonces, el tiempo de ingesta en Visa es de 10 segundos. En Facebook por ejemplo el 
+tiempo de ingesta es de 1 segundo, entonces puedes hacer la llamada de qué nuevos comentarios escribieron en Facebook cada segundo. En Visa si 
+quieres ver las transacciones esa llamada la tienes que hacer cada 10 segundos. Cada 10 segundos aparecen más registros en el tópico, si es 
+Facebook sería cada 1 segundo. El tiempo de ingesta es definido por la fuente de datos. 
+
+Tiempo de vida del registro
+---------------------------
+
+El otro tiempo es el tiempo de vida del registro que aterrizó. De acuerdo a stándar es de un día, eso significa que cualquier proyecto tiene 
+hasta un día para procesar ese registro. Si el registro aterriza hoy a las 08:00 AM vivirá hasta el día siguiente hasta las 07:59 AM. A las 
+08:00 AM se borra. También ya conocemos el sustento, es porque se acumula la memoria RAM y como son proyectos de tiempo real pues tiene que 
+borrarse. Este es el tiempo de vida de los registros en el tópico. 
+
+Tiempo de procesamiento
+-----------------------
+
+Por último, tiempo de procesamiento. Por ejemplo, yo entiendo mi proyecto de tiempo real para analítica de sentimientos, cada minuto, cada 
+minuto nos conectaremos y extraeremos lo que ha llovido en ese minuto y procesaremos los registros. Otro proyecto el tiempo de procesamiento 
+podría definirlo como 1 hora, nos conectamos cada hora contamos las palabras más repetidas y decimos que la tendencia es: perro en Facebook, 
+la gente está hablando de perros, la siguiente hora de gatos, la siguiente hora de loros y así sucesivamente. 
+
+Entonces en proyectos de tiempo real tenemos el tiempo de ingesta que es definido por la fuente de datos no por negocio. El tiempo de vida del 
+registro dentro del tópico que es definido por la propia tecnología, solo un día y el tiempo del procesamiento de los proyectos de tiempo real 
+que es definido eso sí por negocio, cada cuánto procesamos los datos.
+
+Ahora que hemos entendido también los 3 tiempos, vamos a dibujar la arquitectura completa para resolver algunos detalles técnicos. Y también 
+vamos a ver los impedimentos con los que nos vamos a encontrar y para eso existen los emuladores, pero vamos (37:40). Para una fuente de datos 
+en tiempo real los datos tienen que aterrizar en el tópico, pero ¿cómo hacemos este movimiento de datos hacia el tópico? una cosa es 
+conectarnos a Facebook, otra cosa es conectarnos a Visa, otra cosa es conectarnos a las geolocalizaciones de los celulares que tengan una 
+aplicación que envíe los XY, pero ¿cómo enviamos la data? para eso existe el siguiente patrón de diseño: tenemos la fuente de datos en tiempo 
+real y por aquí el tópico, como mínimo vamos a necesitar construir 3 cajitas para mover los datos. 
+
+Client source (Cliente de servicio)
+-----------------------------------
+
+La primera es conocida como el “Cliente de servicio” o “Client source”, tiene como objetivo conectarse a la fuente de datos y extraer los 
+datos. Ejemplos de Client source: por ejemplo, si la fuente de datos fuera Facebook aquí tendríamos que programar con OpenGraph, si la fuente 
+de datos fuera Visa tendríamos que habilitar un canal VPN hacia Visa y programar con el API oficial de Visa, si estuviéramos scrapeando datos 
+de una página web cualquiera tendríamos que aplicar técnicas de web scrapping. Generalmente el Client source no lo construye el data engineer, 
+el ingeniero de datos, sino que, lo construye el especialista en la fuente de datos. Desde un punto de vista de código esta es una función que 
+retorna a los registros capturados. Dentro de esa función pues hay mucha complejidad de conexión o el especialista de Visa no sabe nada de cómo 
+conectarse a Facebook y el especialista de Facebook no sabe nada de cómo conectarse a Visa, así que esta primera cajita generalmente no la 
+hacemos los especialistas de Big Data, lo hace el especialista de la fuente de datos a la que se está conectado, Una vez que tenemos los 
+registros capturados ya podríamos escribirlos en el tópico, sin embargo, vamos a binarizar la información. Cualquiera que sea el formato que 
+la fuente de datos en tiempo real envíe la información, generalmente lo envían en formato Json, pero da igual ,cualquier formato que sea, al 
+final estos son un conjunto de cadenas de caracteres. Escribir cadenas de caracteres es algo costoso, así que antes de escribir esa cadena de 
+caracteres vamos a binarizar la información, para escribir binario, ya que, el binario es lo que está más bajo nivel y es lo que más rápido se 
+escribe dentro del tópico. Al hacer la conversión en binario, la escritura pues ganará algo de tiempo, algunos segundos, pero recuerden que 
+estamos en tiempo real, así que cada segundo cuenta. Por lo tanto, el registro que hayamos recibido de la fuente de datos lo vamos a colocar 
+dentro de una función que binarize la información ¿a qué tipo de binario? al de más bajo nivel, literalmente a 0 y 1. 
+
+Producer
+--------
+
+Una vez que tenemos la información binarizada, aquí tenemos el registro binario, ahora sí lo puede escribir, para eso está el último 
+componente conocido como “Producer”. Se le llama así porque produce los registros dentro del tópico. El Producer toma la cadena binarizada y 
+la escribe dentro del tópico. El Client source, cada segundo o cada 10 segundos, dependiendo ya que eso lo define la fuente de datos, ejecuta 
+el proceso y va pasando por estas cajitas, se extraen los registros, los binariza y los escribe dentro del tópico y de esta manera vamos 
+acumulando la información. Desde un punto de vista de los equipos de Big Data esta parte no la hace el Data Engineer, esta parte la hace el 
+especialista de la fuente de datos, así que no sería nuestro trabajo. Desde la binarización hacia adelante ahí sí es nuestro trabajo y con 
+esto ya tenemos la información capturada. 
+
+Consumer
+--------
+
+Ahora vamos a procesar esa información, ya tenemos el proyecto de ingesta, digamos que estamos ingresando transacciones de Visa, cada 
+transacción tiene el ID de la persona que hizo la transacción, el ID de la empresa en donde se realizó y el monto y fecha de transacción, 
+esos cuatro campos en formato Json. Ahora vamos a hacer el procesamiento de datos, digamos que negocio quiere construir un dashboard visual 
+que cada hora muestre cómo van las ventas, digamos que a esta hora se vendió 10.000 dólares, a la siguiente 20.000, a la siguiente 8000 y así, 
+quiero un dashboard que se actualice cada hora o cada minuto incluso, ya negocio puede definir el tiempo que guste. Necesitamos una cajita que 
+extraiga esos datos cada cierto tiempo, ese es el tiempo de procesamiento, ¿cada cuánto? pues lo que el negocio decida. Digamos cada 1 minuto, 
+la cajita que tiene como objetivo conectarse y extraer la data cada cierto tiempo, a esa cajita se le llama “Consumer”, el Consumer es quien 
+extrae. Entonces bien, extraemos y esto es colocado dentro de un archivo de datos, todo lo que ha llovido durante ese último minuto se coloca 
+en un archivo de datos y ese archivo de datos se envía el clúster de Spark para ser procesado. Va a ser colocado dentro de un dataframe, por 
+supuesto hay que hacer la reserva de tuning computacional y todo lo que conocemos y a partir de ahí es un dataframe como si fuese un dataframe 
+batchero. Tenemos en el clúster de Spark el dataframe con todos los registros. Y ¿qué es lo que queremos hacer? digamos que negocio te pone 
+una regla, vamos a hacer un filtro solamente, me interesan aquellos registros cuyo monto de transacción sea mayor a 1500 dólares. Dentro de 
+ese dataframe harás el filter como conocemos y saldrá el dataframe resultante. Una vez que tenemos el dataframe resultante, tenemos que 
+construir la cajita que almacene ese dataframe resultante dentro del sistema de archivos distribuidos (44:30). En algún directorio vamos a 
+acumular la información de las transacciones, acá tenemos el dataframe resultante y guardamos un archivo con esa información que se procesa 
+en ese minuto. Al siguiente minuto se dispara el evento, se toman los nuevos registros que llovieron en ese minuto, se coloca un archivo en 
+un dataframe, se aplica la lógica que negocio te había pedido, tienes la resultante, la escribes y ahora en el siguiente minuto tienes un 
+segundo archivo y así sucesivamente. Cada minuto el directorio va acumulando nueva información. Generalmente luego lo que se hace es colocar 
+por encima una tabla ahí, para tener una tabla de tipo SQL en donde vemos cómo en tiempo real la información se va llenando sobre esa tabla 
+según lo que el negocio ha pedido y ya luego con un dashboard visual se conectan a la tabla y hacen los pintados de los datos en tiempo real. 
+Pero bueno este es un curso de Spark y Scala y llegamos solamente hasta aquí, hasta acumular los los archivos. Y con esto ya tenemos el 
+proyecto en tiempo real. 
+
+Así que ahora sí pinto la arquitectura completa y entendemos cada uno de estos componentes y vamos a ver la falla potencial que tiene y cómo 
+solucionarlas. Ya tenemos casi todo listo: 
+
+1. Fuente de datos en tiempo real 
+2. Tormenta de datos que es capturada por el Client Source, puede ser el cliente de Visa, el cliente de Facebook, etc. 
+3. Cajita de binarización para binarizar los registros, se gana un par de segundos en la escritura en tiempo real, eso nos vale mucho. 
+4. Producer para escribir lo que hemos extraído dentro del tópico 
+5. Tiempo de ingesta que es definido por la fuente de datos en tiempo real, eso no lo define negocio. 
+6. Una vez que los datos aterrizan ya podemos hacer los proyectos
+7. Consumer del proyecto que extrae la información según lo que el negocio define en tiempo real, como 1 minuto o 10 segundos o lo que 
+   negocio diga. El consumer deja la información que había llovido en ese minuto en un archivo 
+8. Y dentro del clúster de Spark es recibido como un dataframe, procesas el dataframe con todo lo que hemos aprendido, tienes un dataframe 
+   resultante y llamas a la cajita de escritura, la cual irá acumulando en archivos esa resultante. 
+9. Después de 1 minuto se vuelve a disparar el evento, se extrae lo nuevo que haya llovido y cada minuto pues se van acumulando esas 
+   resultantes y con eso ya tenemos la arquitectura de tiempo real bien definida. 
+
+A un nivel teórico aquí acabaría la explicación, pero ahora vamos a escenarios que ocurren en la vida real. Dentro de una empresa esta 
+arquitectura aparentemente funciona, pero tiene detalles, vamos a escenarios con los que te vas a encontrar con negocio, digamos que negocio 
+te dice lo siguiente: mira las transacciones en promedio van a venir diariamente pues son 10.000 por segundo. Estamos haciendo un proyecto de 
+geolocalización, vienen 10.000 transacciones, por segundo, pero en el día de la madre y en Navidad en donde las personas se conectan a sus 
+celulares y hacen muchas cosas, mandan saludos, se espera que vengan 50.000 transacciones por segundo. Cuando sea Navidad nuestra arquitectura 
+y nuestros clusters ¿van a soportar esa transaccionabilidad? vamos a hacer las pruebas. Aquí está el equipo de ingesta y está dejando las 
+transacciones y estamos en el mes de Julio, estamos muy lejos de Navidad y funciona bien con 10.000 transacciones funciona, es lo esperado. 
+Pero y ¿qué va a pasar cuando vengan 50.000 transaccione en Navidad? no sabemos, vamos a esperar a que sea Navidad a ver qué pasa, es Navidad 
+el proyecto colapsa y te estás conectando el 24 y 25 de diciembre a las 22:00 PM y eso no tiene ningún sentido, no es posible que eso pase, de 
+alguna manera hay que hacer pruebas de volumetría, entonces si negocio nos dice y ¿qué va a pasar en Navidad? de alguna manera tendríamos que 
+emular esas transacciones para ver qué es lo que va a pasar en Navidad y ver si esto realmente resiste o no resiste y desde el día 1 tenerlo 
+solucionado. (49:38) 
+
+Vamos a otro escenario de la vida real, otra cosa con la que te vas a encontrar es la siguiente: como yo les dije el equipo de ingesta no es 
+el equipo de Big Data, es el equipo especialista en ingestar de servidores de visa o geolocalizaciones de celulares. El punto de partida es 
+el Cient source para hacer todo lo demás. Pero hacer este Client source no es algo que se puede hacer de un día para otro, toma tiempo, en 
+sí es un proyecto más, puede tomar de cuatro semanas a 8 semanas. 
+
+¿Cuál es el problema? 
+
+- El primero es que tienes que esperar a que esto esté listo y eso toma mucho tiempo y retrasa el proyecto. 
+- Segundo, después de 8 semanas que has esperado te dicen: ya está la conexión, sigue ahora haciendo todo lo que tienes que hacer para 
+desarrollar. Empiezas a trabajar y de pronto algo le pasa al Client source, los desarrolladores lo programaron mal y colapsa y el proyecto de 
+Big Data estaba para dos meses, y ya pasó un mes y a la mitad hubo un colapso del Client source y todo se detuvo. Entonces vienen los de 
+ingesta, de acuerdo vamos a solucionarlo, y después de 2 semanas lo solucionan y ahora solo te quedan dos semanas para terminar el proyecto y 
+hubo un retraso. Nuevamente esto es otro escenario de la vida real, cosas que van a pasar y cosas con las que sí o sí se van a encontrar y crea 
+problemas en retrasos de tiempo. Entonces, la vida real es más compleja que un arquetipo de código. 
+
+Emular tormenta de datos
+------------------------
+
+Hay este tipo de escenarios y por supuesto, hay patrones para resolverlo. ¿Qué debemos de hacer en este caso? vamos a trabajar con un emulador 
+de datos en tiempo real para no depender de la verdadera fuente de datos. Lo que tenemos que hacer es lo siguiente: de la fuente de datos 
+tenemos que sacar algún archivo con algunas transacciones, generalmente 100.000 transacciones de ejemplo. Van a ver que generalmente son 
+archivos Json. Aquí el equipo de ingesta con el Cliente source estará 8 semanas pensando para hacer la verdadera ingesta. Pero para que tú 
+puedas desarrollar lo que se hace es el patrón de diseño de emulación en tiempo real, básicamente es construir una cajita que emule la tormenta 
+de datos, que reciba los siguientes dos parámetros: 
+
+- ¿Cuántos registros quieres extraer? digamos que 1000 y 
+- ¿Cada cuánto tiempo? cada segundo. 
+
+Defines cantidad y velocidad de tormenta. La cajita extrae 1000 registros aleatorios del archivo y los envía a binarizar y el producer los 
+escribe en el tópico y listo cada segundo tienes información que está lloviendo sobre el tópico, para que puedas hacer tu proyecto de 
+procesamiento, lo que el negocio te ha pedido. Digamos que quieres hacer una prueba y en el día de la madre van a venir 50.000 transacciones, 
+ok, dame un segundo, voy a ir a mi emulador y le voy a poner ahora a 50.000 transacciones. Ya construí todo el flujo, ahora solo quiero ver qué 
+pasa cuando vengan 50.000 transacciones, se extraerán 50.000 registros al azar cada segundo y vemos si la infraestructura soporta y si no 
+soporta, habría que poner más servidores en el clúster Kafka, ponemos más y vemos donde sí soporte y con eso ya tenemos una respuesta de que va 
+a pasar en el día de la madre o el día de Navidad. Por eso es que estos proyectos nunca deben de apuntar a la fuente de datos original, porque 
+no se pueden hacer pruebas y además hacer esta conexión toma tiempo. El proyecto debe desarrollarse siempre con un emulador de tormenta de
+datos. Una vez que terminaste todo el proyecto con la emulación de tormenta de datos, ya depende de ellos, y dicen: ya terminamos la ingesta y 
+ahora sí hacen el cambio, la cajita de binarización llama a la cajita de extracción, la verdadera fuente de datos, y ya no dependemos del 
+emulador y como ya probamos todo esto desde el día 1 esto tiene que funcionar y si algo fallase lo más probable es que el punto de falla sea 
+del otro equipo de trabajo, entonces ya es más fácil de delegar la responsabilidad. En resumen, el desarrollo se debe de hacer siempre con un 
+emulador. 
+
+Kafka
+-----
+
+Primero entendamos cómo funcionan los tópicos. Un clúster Kafka como mínimo debe de tener 6 servidores y esto tiene un sustento. Cuando tu 
+creas un tópico físicamente el tópico vive en la memoria RAM de los servidores, digamos que creas un tópico para ingresar datos de Facebook y 
+vive en el servidor 1, el problema es que significaría que el 100% de los registros estarían aterrizando dentro de ese servidor y el resto de 
+servidores estaría flojo, estaría desocupado, así que los tópicos se particionan. Cuando nosotros creamos un tópico, físicamente ese tópico 
+está particionado en 3 servidores diferentes, entonces creas el tópico para ingestar datos de una página de Facebook, vivirá en 3 servidores 
+diferentes el tópico, un 33% de la tormenta de datos irá a este Server, otro 33% aquí y otro 33% aquí. De esa manera los servidores no están 
+tan saturados, pero por supuesto, que esto también tiene un problema y ¿qué pasa si hay una falla en la red y por alguna razón perdemos una de 
+las particiones del tópico? pues perderíamos la información, por lo tanto, hay que tener una réplica de copia de seguridad. En otro servidor 
+diferente se debe de tener una copia de la partición, de esta manera si la copia original cae, se activa la copia de esa partición para no 
+perder la información. Así que por eso como mínimo un clúster Kafka debe de tener 6 servidores para poder tener 3 particiones por tópico y dos 
+copias en total, físicamente son 6 servidores. Otro punto respecto a la infraestructura, tenemos el clúster Kafka y tenemos el clúster de 
+Spark, estos dos clusters tienen que poder verse entre sí, cuando nosotros estamos manejando múltiples infraestructuras necesitamos una 
+infraestructura de sincronización de clusters. Hay un tercer cluster, una tecnología llamada “ZooKeeper”, en español esto se traduce como el 
+cuidador de los animales en un zoológico. Se le llama así porque cuidan las infraestructuras que deben de verse entre sí. Digamos que en el 
+clúster Kafka tenemos 6 servidores con las IPs 1, 2, 3, 4, 5 y 6. Y en el clúster de Spark tenemos 10 servidores con las IPs 11, 12, 13 y así 
+hasta la 20. Para aquella comunicación entre los servidores del clúster Kafka y los servidores del clúster Spark tienen que verse entre sí y 
+para eso hay un intermediario que es Zookeeper. Dentro de ZooKeeper, el cual también es un clúster formado por 3 servidores, y dentro hay un 
+archivo de configuración en donde están las IPs de todos los servidores que deben de verse entre sí. En el cluster Kafka tenemos 6 IPs, 
+entonces en un archivo de configuración tenemos que poner esas 6 IPs. En el clúster Spark tenemos 20 IPs, entonces también ponemos esas 20 IPs. 
+Entonces, de acuerdo, todos estos servidores tienen que verse entre sí, de esa manera se crea la comunicación entre estos dos clusters. Por lo 
+tanto, en proyectos de tiempo real, el objetivo de Kafka es para soporte de tormenta de datos, Spark para el procesamiento y ZooKeeper para que 
+ambas infraestructuras puedan verse entre si. Si estás trabajando en la nube, digamos que estás usando Kinesis de AWS para crear los tópicos, 
+para ti el Zookeeper es transparente, tú solamente ves tú clúster de Kinesis, recuerda que Kinesis es la tecnología equivalente propietaria de 
+Kafka en AWS.
+
+Para la instalación del laboratorio, lamentablemente en las cuentas gratuitas de Databricks solo podemos tener un clúster, esto realmente se 
+hace en 3 clusters diferentes, pero como estamos practicando, sobre el mismo clúster en donde está instalado Spark vamos a instalar Kafka y 
+también vamos a instalar Zookeeper. Por supuesto que esto es un antipatrón de diseño. Ya en un escenario real sería en infraestructuras 
+diferentes, pero como estámos practicando, pues, no hay ningún problema y todo vive en el mismo clúster. 
+
+Instalación de Kafka y Zookeeper
+--------------------------------
+
+Hoy solamente vamos a preparar el entorno que necesitamos, ya la siguiente semana empezamos a hacer toda la construcción. Para 
+habilitar la comunicación vamos a necesitar lo siguiente: 
+
+- Dentro del clúster Spark, recuerden que estamos hablando de 3 clusters diferentes, hay que instalar las librerías que permitan 
+entender lo que Kafka mande. Ya sabemos que el clúster Zookeeper va a ser el encargado de que esta comunicación exista, con eso 
+habilitamos la comunicación. Ahora para que Spark pueda recibir lo que Kafka envía hay que instalar una librería sobre Spark, esta 
+librería se llama “Spark Streaming Kafka” es la que reconoce lo que Kafka envía. 
+- También una vez que Spark ya puede aceptar cosas de Kafka, ahora vamos a procesar eso que hemos aceptado, para eso necesitamos otra 
+librería conocida como “Spark SQL Kafka”. Por lo tanto, lo primero es instalar estas dos librerías sobre Spark para leer los datos 
+que vengan de Kafka y poder procesarlos. 
+
+---> Librería para leer en streaming los datos desde KAFKA hacia SPARK
+
+Para instalar la libreria:  - Dar click en el cluster creado
+                            - Seleccionar "Librerias"
+                            - Seleccionar "Maven"
+                            - En el recuadro de "Coordinates" escribir la libreria, como por ejemplo:
+                              org.apache.spark:spark-streaming-kafka-0-10_2.12:3.2.2
+
+---> Librería para procesamiento entre SPARK y KAFKA (Nos permite procesar lo capturado desde Kafka)
+
+Para instalar la libreria:  - Dar click en el cluster creado
+                            - Seleccionar "Librerias"
+                            - Seleccionar "Maven"
+                            - En el recuadro de "Coordinates" escribir la libreria, como por ejemplo:
+                              org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.2
+
+---> Descarga de Kafka
+
+Desde el notebook: %sh wget https://dlcdn.apache.org/kafka/3.4.1/kafka_2.12-3.4.1.tgz
+
+---> Descompresión 
+
+Desde el notebook: %sh tar -xvf kafka_2.12-3.4.1.tgz
+
+---> Iniciar Zookeeper
+
+Desde el notebook: %sh ./kafka_2.12-3.4.1/bin/zookeeper-server-start.sh ./kafka_2.12-3.4.1/config/zookeeper.properties
+
+Como estamos en una cuenta gratuita en Databricks para practicar si yo cierro este notebook el servicio de Zookeeper se apaga 
+así que vamos a dejar abierto el notebook para que el servicio quede permanentemente.
+
+Inicializar Kafka
+------------------
+
+Desde un nuevo notebook: %sh ./kafka_2.12-3.4.1/bin/kafka-server-start.sh ./kafka_2.12-3.4.1/config/server.properties
+
+No debemos cerrar el notebook
+
+
+Creación del tópico y producer
+------------------------------
+
+---> Creación del tópico
+Según standar, en partitions deberia decir 3 y en replication-factor 2. Pero como estamos sobre un solo servidor utilizamos un 1
+
+Desde un nuevo notebook: %sh ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic transaccion --partitions 1 --replication-factor 1
+
+---> Listar tópico
+
+Desde ese mismo notebook: %sh ./kafka_2.12-3.4.1/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+
+Envío de mensaje con un Producer de consola
+-------------------------------------------
+
+Vamos a ver si realmente el tópico va a permitir fluir la información. Lo que haremos inmediatamente después de crear el tópico es 
+escribir un Producer de prueba para enviar un pequeño mensaje para ver si aterriza dentro del tópico y escribir un pequeño Consumer 
+de prueba para ver si podemos extraer ese mensaje, de esta manera tenemos garantía que el tópico sí está funcionando y el error está 
+por el envío de datos o por el procesamiento. ¿Cómo descartamos el envío de datos? con el emulador, entonces, también ya tenemos una 
+manera de descartar puntos de errores. Vamos a construir entonces el flujo de prueba para garantizar que el tópico sí está escuchando 
+bien la información. 
+
+Desde ese mismo notebook: %sh echo "Hola mundo desde CONSOLA" | ./kafka_2.12-3.4.1/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic transaccion
+
+
+Creación de Consumer de consola
+-------------------------------
+
+---> Primero se carga este comando y luego el comando entregado en "Envío de mensaje con un Producer de consola"
+
+Desde un nuevo notebook: %sh ./kafka_2.12-3.4.1/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transaccion
+
